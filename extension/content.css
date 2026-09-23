@@ -1,0 +1,19 @@
+.pixeltrail-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #0f9d58;
+  background: #eaf7ef;
+  color: #0b6b3c;
+  font: 500 12px/1.4 "Google Sans", Roboto, Arial, sans-serif;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pixeltrail-chip[data-tracked="true"] {
+  background: #0f9d58;
+  color: #fff;
+}

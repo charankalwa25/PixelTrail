@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>PixelTrail</title>
+
+    <style>
+      body {
+        margin: 0;
+        width: 320px;
+        padding: 16px;
+        font: 14px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: #12181f;
+        color: #eef2f6;
+      }
+
+      h1 {
+        margin: 0 0 4px;
+        font-size: 17px;
+      }
+
+      p {
+        margin: 0 0 14px;
+        color: #9fb0bf;
+        font-size: 12px;
+      }
+
+      label {
+        display: block;
+        margin: 10px 0 5px;
+        font-size: 12px;
+        color: #b9c6d1;
+      }
+
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 9px 10px;
+        border-radius: 8px;
+        border: 1px solid #2b3642;
+        background: #0d1319;
+        color: #eef2f6;
+        font-size: 12px;
+        outline: none;
+      }
+
+      input:focus {
+        border-color: #35d492;
+      }
+
+      .row {
+        display: flex;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      button {
+        flex: 1;
+        padding: 9px 10px;
+        border-radius: 8px;
+        border: 0;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      #insert {
+        background: #35d492;
+        color: #06301f;
+      }
+
+      #remove {
+        background: #263240;
+        color: #dbe5ee;
+      }
+
+      #status {
+        margin-top: 10px;
+        font-size: 12px;
+        min-height: 18px;
+        color: #35d492;
+      }
+
+      .info {
+        margin-top: 12px;
+        padding: 9px;
+        border-radius: 8px;
+        background: #0d1319;
+        color: #8193a3;
+        font-size: 11px;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <h1>PixelTrail</h1>
+
+    <p>
+      Create a tracking pixel and insert it into your Gmail draft.
+    </p>
+
+    <label for="recipient">Recipient email</label>
+    <input
+      id="recipient"
+      type="email"
+      placeholder="receiver@example.com"
+    />
+
+    <label for="subject">Email subject</label>
+    <input
+      id="subject"
+      type="text"
+      placeholder="Enter email subject"
+    />
+
+    <div class="row">
+      <button id="insert">Create & Insert</button>
+      <button id="remove">Remove</button>
+    </div>
+
+    <div id="status"></div>
+
+    <div class="info">
+      The email will contain an invisible 1×1 tracking pixel.
+      An open event is recorded when the pixel is requested.
+    </div>
+
+    <script src="popup.js"></script>
+
+  </body>
+</html>
