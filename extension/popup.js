@@ -51,7 +51,7 @@ async function sendToTab(message) {
       return false;
     }
 
-    return true;
+    return result;
 
   } catch (error) {
 
@@ -70,18 +70,26 @@ async function sendToTab(message) {
 // Create tracking ID through our FastAPI backend
 async function createTrackedEmail() {
 
-  const recipient = recipientInput.value.trim();
-  const subject = subjectInput.value.trim();
+  // Get recipient and subject directly from the active Gmail compose window
+  say("Reading your Gmail draft...");
 
-  if (!recipient) {
-    say("Enter the recipient email.", false);
+  const composeDetails = await sendToTab({
+    type: "PIXELTRAIL_GET_COMPOSE_DETAILS"
+  });
+
+  if (!composeDetails) {
     return;
   }
 
-  if (!subject) {
-    say("Enter the email subject.", false);
-    return;
-  }
+  const recipient = composeDetails.recipient;
+  const subject = composeDetails.subject;
+  recipientInput.value = recipient;
+  subjectInput.value = subject;
+
+  console.log("Gmail compose details:", {
+    recipient: recipient,
+    subject: subject
+  });
 
   say("Creating tracking pixel...");
 
@@ -116,28 +124,31 @@ async function createTrackedEmail() {
     const pixelUrl = data.tracking_pixel_url;
 
     if (!pixelUrl) {
-      say("Backend did not return a tracking pixel URL.", false);
+      say(
+        "Backend did not return a tracking pixel URL.",
+        false
+      );
       return;
     }
 
     // Save the tracking information
     await chrome.storage.local.set({
-  pixelUrl: pixelUrl,
-  trackingId: data.tracking_id,
-  confirmSeenUrl: data.confirm_seen_url,
-  recipient: recipient,
-  subject: subject
-  });
+      pixelUrl: pixelUrl,
+      trackingId: data.tracking_id,
+      confirmSeenUrl: data.confirm_seen_url,
+      recipient: recipient,
+      subject: subject
+    });
 
     say("Tracking pixel created. Inserting...");
 
     // Tell Gmail content script to insert the pixel
     const result = await sendToTab({
-  type: "PIXELTRAIL_INSERT",
-  url: pixelUrl,
-  confirmSeenUrl: data.confirm_seen_url,
-  trackingId: data.tracking_id
- });
+      type: "PIXELTRAIL_INSERT",
+      url: pixelUrl,
+      confirmSeenUrl: data.confirm_seen_url,
+      trackingId: data.tracking_id
+    });
 
     if (result) {
       say("Pixel inserted — send your email normally.");
@@ -148,11 +159,12 @@ async function createTrackedEmail() {
     console.error("PixelTrail error:", error);
 
     say(
-      "Could not connect to PixelTrail backend. Is FastAPI running?",
+      "Could not connect to PixelTrail backend.",
       false
     );
   }
 }
+
 
 
 // Remove tracking pixel

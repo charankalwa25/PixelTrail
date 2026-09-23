@@ -16,6 +16,84 @@ function activeBody() {
   const bodies = Array.from(document.querySelectorAll('div[aria-label][role="textbox"]'));
   return bodies.find((el) => el.offsetParent !== null) || bodies[0] || null;
 }
+function getComposeDetails() {
+  const body = activeBody();
+
+  if (!body) {
+    return {
+      ok: false,
+      error: "Open a Gmail compose window first."
+    };
+  }
+
+  // Try to find the compose window containing the active body
+  const compose =
+    body.closest('div[role="dialog"]') ||
+    body.closest(".aoI") ||
+    body.parentElement?.parentElement;
+
+  if (!compose) {
+    return {
+      ok: false,
+      error: "Could not find the Gmail compose window."
+    };
+  }
+
+  // Get subject
+  const subjectElement =
+    compose.querySelector('input[name="subjectbox"]') ||
+    compose.querySelector('input[placeholder="Subject"]');
+
+  const subject = subjectElement?.value?.trim() || "";
+
+  // Get recipients
+  const recipients = [];
+
+  // Gmail usually stores entered recipients in elements with an "email" attribute
+  compose.querySelectorAll("[email]").forEach((element) => {
+    const email = element.getAttribute("email");
+
+    if (email && email.includes("@") && !recipients.includes(email)) {
+      recipients.push(email);
+    }
+  });
+
+  // Also check the recipient input itself
+  const recipientInput =
+    compose.querySelector('input[aria-label="To recipients"]') ||
+    compose.querySelector('input[name="to"]');
+
+  if (recipientInput?.value?.trim()) {
+    const typedRecipient = recipientInput.value.trim();
+
+    if (
+      typedRecipient.includes("@") &&
+      !recipients.includes(typedRecipient)
+    ) {
+      recipients.push(typedRecipient);
+    }
+  }
+
+  if (recipients.length === 0) {
+    return {
+      ok: false,
+      error: "No recipient found. Enter a recipient in Gmail first."
+    };
+  }
+
+  if (!subject) {
+    return {
+      ok: false,
+      error: "No subject found. Enter a subject in Gmail first."
+    };
+  }
+
+  return {
+    ok: true,
+    recipient: recipients.join(", "),
+    subject: subject
+  };
+}
 
 function insertPixel(url, confirmSeenUrl) {
   const body = activeBody();
@@ -213,6 +291,12 @@ console.log(
 }
 
 chrome.runtime.onMessage.addListener((message, _sender, respond) => {
+
+  if (message?.type === "PIXELTRAIL_GET_COMPOSE_DETAILS") {
+    const details = getComposeDetails();
+    respond(details);
+    return true;
+  }
 
   if (message?.type === "PIXELTRAIL_INSERT") {
 
