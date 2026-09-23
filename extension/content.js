@@ -128,7 +128,7 @@ function trackLinks(trackingId) {
     const encodedUrl = encodeURIComponent(targetUrl);
 
     const trackingUrl =
-      `https://ramrod-amplify-jukebox.ngrok-free.dev/track/click/${trackingId}?url=${encodedUrl}`;
+    `https://pixeltrail.onrender.com/track/click/${trackingId}?url=${encodedUrl}`;
 
     link.setAttribute("href", trackingUrl);
 

@@ -80,8 +80,8 @@ def create_tracked_email(email: EmailCreate):
         "recipient": email.recipient,
         "subject": email.subject,
         "sent_at": sent_at,
-        "tracking_pixel_url": f"https://ramrod-amplify-jukebox.ngrok-free.dev/track/{tracking_id}.png",
-        "confirm_seen_url": f"https://ramrod-amplify-jukebox.ngrok-free.dev/track/seen/{tracking_id}"
+        "tracking_pixel_url": f"https://pixeltrail.onrender.com/track/{tracking_id}.png",
+        "confirm_seen_url": f"https://pixeltrail.onrender.com/track/seen/{tracking_id}"
     }
 
 
