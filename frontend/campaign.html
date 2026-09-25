@@ -1570,7 +1570,7 @@
                     <th>STATUS</th>
                     <th>OPENS</th>
                     <th>CLICKS</th>
-                    <th>CONFIRMED SEEN</th>
+                    <th>ACTIVITY</th>
                 </tr>
             </thead>
 
@@ -2310,12 +2310,11 @@
                 <td colspan="5">
                     <div class="recipient-empty-state">
                         <div class="recipient-empty-icon">
-                            ◉
+                            ○
                         </div>
 
                         <div>
                             <strong>No recipient activity yet</strong>
-
                             <p>
                                 Engagement data will appear here once recipients interact with your email.
                             </p>
@@ -2328,8 +2327,24 @@
         return;
     }
 
-    container.innerHTML = emails.map(email => {
+    function formatActivityTime(value) {
+        if (!value) {
+            return "—";
+        }
 
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) {
+            return "—";
+        }
+
+        return date.toLocaleString([], {
+            dateStyle: "medium",
+            timeStyle: "short"
+        });
+    }
+
+    container.innerHTML = emails.map(email => {
         const recipient = email.recipient || "Unknown recipient";
 
         const initial = recipient
@@ -2339,10 +2354,21 @@
         const status = email.status || "sent";
 
         const opens = Number(email.open_count || 0);
-
         const clicks = Number(email.click_count || 0);
 
         const confirmed = Boolean(email.confirmed_seen_at);
+
+        const openedTime = formatActivityTime(
+            email.first_opened_at
+        );
+
+        const clickedTime = formatActivityTime(
+            email.first_clicked_at
+        );
+
+        const confirmedTime = formatActivityTime(
+            email.confirmed_seen_at
+        );
 
         return `
             <tr>
@@ -2380,31 +2406,51 @@
                     </span>
                 </td>
 
-                <td style="text-align:center;">
+                <td>
+                    <div style="
+                        display:flex;
+                        flex-direction:column;
+                        gap:6px;
+                        font-size:12px;
+                    ">
 
-                    ${
-                        confirmed
-                            ? `
-                                <span class="recipient-confirmed">
-                                    <span class="recipient-confirmed-icon">✓</span>
-                                    Confirmed
-                                </span>
-                              `
-                            : `
-                                <span style="
-                                    color:var(--muted);
-                                    font-size:11px;
-                                ">
-                                    Not confirmed
-                                </span>
-                              `
-                    }
+                        <div>
+                            <span style="color:#888;">
+                                Opened:
+                            </span>
+                            <span>
+                                ${openedTime}
+                            </span>
+                        </div>
 
+                        <div>
+                            <span style="color:#888;">
+                                Clicked:
+                            </span>
+                            <span>
+                                ${clickedTime}
+                            </span>
+                        </div>
+
+                        <div>
+                            <span style="color:#888;">
+                                Confirmed:
+                            </span>
+
+                            <span class="${
+                                confirmed
+                                    ? "recipient-confirmed"
+                                    : ""
+                            }">
+                                ${confirmedTime}
+                            </span>
+                        </div>
+
+                    </div>
                 </td>
 
             </tr>
         `;
-
     }).join("");
 }
 
