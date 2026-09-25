@@ -48,6 +48,7 @@ from backend.email_service import send_email
 from datetime import datetime, timezone
 import uuid
 import re
+from urllib.parse import quote
 from PIL import Image
 import io
 
@@ -114,6 +115,24 @@ def build_tracked_email_html(body, tracking_id):
     confirm_seen_url = (
         f"https://pixeltrail.onrender.com/"
         f"track/confirm/{tracking_id}"
+    )
+
+    # Convert normal external links into PixelTrail tracked links
+    def replace_link(match):
+        original_url = match.group(1)
+
+        tracked_url = (
+            f"https://pixeltrail.onrender.com/"
+            f"track/click/{tracking_id}"
+            f"?url={quote(original_url, safe='')}"
+        )
+
+        return f'href="{tracked_url}"'
+
+    body = re.sub(
+        r'href=["\'](https?://[^"\']+)["\']',
+        replace_link,
+        body
     )
 
     tracking_footer = f"""
