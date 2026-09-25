@@ -3,3 +3,5 @@ uvicorn[standard]
 pydantic
 Pillow
 psycopg2-binary
+python-jose[cryptography]
+passlib[bcrypt]

@@ -79,17 +79,17 @@ def initialize_database():
             """
             CREATE TABLE IF NOT EXISTS emails (
                 id BIGSERIAL PRIMARY KEY,
-                campaign_id BIGINT
-                    REFERENCES campaigns(id)
-                    ON DELETE CASCADE,
+                campaign_id BIGINT REFERENCES campaigns(id) ON DELETE CASCADE,
                 tracking_id TEXT UNIQUE NOT NULL,
                 recipient TEXT NOT NULL,
                 subject TEXT,
+                body TEXT,
                 sent_at TEXT NOT NULL,
                 first_opened_at TEXT,
                 last_opened_at TEXT,
                 open_count INTEGER NOT NULL DEFAULT 0,
                 status TEXT NOT NULL DEFAULT 'sent',
+                message_id TEXT,
                 click_count INTEGER NOT NULL DEFAULT 0,
                 first_clicked_at TEXT,
                 last_clicked_at TEXT,
@@ -109,6 +109,19 @@ def initialize_database():
             ON DELETE CASCADE
             """
         )
+        cursor.execute(
+        """
+        ALTER TABLE emails
+        ADD COLUMN IF NOT EXISTS body TEXT
+        """
+)
+        cursor.execute(
+        """
+        ALTER TABLE emails
+        ADD COLUMN IF NOT EXISTS message_id TEXT
+        """
+)
+
 
         # ------------------------------
         # Indexes
@@ -199,6 +212,7 @@ def initialize_database():
             last_opened_at TEXT,
             open_count INTEGER NOT NULL DEFAULT 0,
             status TEXT NOT NULL DEFAULT 'sent',
+            message_id TEXT,
             click_count INTEGER NOT NULL DEFAULT 0,
             first_clicked_at TEXT,
             last_clicked_at TEXT,
@@ -232,6 +246,24 @@ def initialize_database():
             ADD COLUMN click_count INTEGER NOT NULL DEFAULT 0
             """
         )
+
+    if "body" not in existing_columns:
+        connection.execute(
+        """
+        ALTER TABLE emails
+        ADD COLUMN body TEXT
+        """
+        )
+
+    if "message_id" not in existing_columns:
+        connection.execute(
+        """
+        ALTER TABLE emails
+        ADD COLUMN message_id TEXT
+        """
+    )
+
+
 
     if "first_clicked_at" not in existing_columns:
         connection.execute(
@@ -625,6 +657,41 @@ def get_user_by_email(email):
     return user
 
 
+def get_user_by_id(user_id):
+    connection = get_connection()
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM users
+            WHERE id = %s
+            """,
+            (user_id,)
+        )
+
+        user = cursor.fetchone()
+
+    else:
+        user = connection.execute(
+            """
+            SELECT *
+            FROM users
+            WHERE id = ?
+            """,
+            (user_id,)
+        ).fetchone()
+
+    connection.close()
+
+    return user
+
+
+
+
+
 # =========================================================
 # CAMPAIGN FUNCTIONS
 # =========================================================
@@ -762,3 +829,252 @@ def get_campaigns_by_user(user_id):
     connection.close()
 
     return campaigns
+
+def get_emails_by_campaign(campaign_id):
+    connection = get_connection()
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM emails
+            WHERE campaign_id = %s
+            ORDER BY sent_at DESC
+            """,
+            (campaign_id,)
+        )
+
+        emails = cursor.fetchall()
+
+    else:
+        emails = connection.execute(
+            """
+            SELECT *
+            FROM emails
+            WHERE campaign_id = ?
+            ORDER BY sent_at DESC
+            """,
+            (campaign_id,)
+        ).fetchall()
+
+    connection.close()
+
+    return emails
+
+def create_campaign_email(
+    campaign_id,
+    tracking_id,
+    recipient,
+    subject,
+    body,
+    sent_at,
+    status="queued"
+):
+    connection = get_connection()
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO emails (
+                campaign_id,
+                tracking_id,
+                recipient,
+                subject,
+                body,
+                sent_at,
+                status
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+            """,
+            (
+                campaign_id,
+                tracking_id,
+                recipient,
+                subject,
+                body,
+                sent_at,
+                status
+            )
+        )
+
+        email_id = cursor.fetchone()["id"]
+
+    else:
+        cursor = connection.execute(
+            """
+            INSERT INTO emails (
+                campaign_id,
+                tracking_id,
+                recipient,
+                subject,
+                body,
+                sent_at,
+                status
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                campaign_id,
+                tracking_id,
+                recipient,
+                subject,
+                body,
+                sent_at,
+                status
+            )
+        )
+
+        email_id = cursor.lastrowid
+
+    connection.commit()
+    connection.close()
+
+    return email_id
+
+def get_campaign_email_by_recipient(campaign_id, recipient):
+    connection = get_connection()
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM emails
+            WHERE campaign_id = %s
+              AND recipient = %s
+            LIMIT 1
+            """,
+            (
+                campaign_id,
+                recipient
+            )
+        )
+
+        email = cursor.fetchone()
+
+    else:
+        email = connection.execute(
+            """
+            SELECT *
+            FROM emails
+            WHERE campaign_id = ?
+              AND recipient = ?
+            LIMIT 1
+            """,
+            (
+                campaign_id,
+                recipient
+            )
+        ).fetchone()
+
+    connection.close()
+
+    return email
+
+def update_campaign_status(campaign_id, status):
+    connection = get_connection()
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            UPDATE campaigns
+            SET status = %s
+            WHERE id = %s
+            """,
+            (
+                status,
+                campaign_id
+            )
+        )
+
+    else:
+        connection.execute(
+            """
+            UPDATE campaigns
+            SET status = ?
+            WHERE id = ?
+            """,
+            (
+                status,
+                campaign_id
+            )
+        )
+
+    connection.commit()
+    connection.close()
+
+def update_campaign_email_message_id(email_id, message_id):
+    connection = get_connection()
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            UPDATE emails
+            SET message_id = %s
+            WHERE id = %s
+            """,
+            (
+                message_id,
+                email_id
+            )
+        )
+
+    else:
+        connection.execute(
+            """
+            UPDATE emails
+            SET message_id = ?
+            WHERE id = ?
+            """,
+            (
+                message_id,
+                email_id
+            )
+        )
+
+    connection.commit()
+    connection.close()
+
+def update_campaign_email_status(email_id, status):
+    connection = get_connection()
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            UPDATE emails
+            SET status = %s
+            WHERE id = %s
+            """,
+            (
+                status,
+                email_id
+            )
+        )
+
+    else:
+        connection.execute(
+            """
+            UPDATE emails
+            SET status = ?
+            WHERE id = ?
+            """,
+            (
+                status,
+                email_id
+            )
+        )
+
+    connection.commit()
+    connection.close()
