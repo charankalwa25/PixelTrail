@@ -1,10 +1,12 @@
 import email
 
 from fastapi import FastAPI, Depends, HTTPException, Header
+from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import Response, FileResponse, RedirectResponse, HTMLResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 
@@ -53,6 +55,25 @@ from PIL import Image
 import io
 
 app = FastAPI(title="PixelTrail API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://127.0.0.1:8000",
+        "http://localhost:8000",
+        "https://pixeltrail.onrender.com",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+@app.get("/", include_in_schema=False)
+def frontend_home():
+    return RedirectResponse(url="/app/login.html")
+app.mount(
+    "/app",
+    StaticFiles(directory="frontend", html=True),
+    name="frontend"
+)
 security = HTTPBearer()
 
 # Initialize the database when the server starts
@@ -311,6 +332,28 @@ def get_my_campaigns(
     return {
         "campaigns": [dict(campaign) for campaign in campaigns]
     }
+
+
+@app.get("/campaigns/{campaign_id}")
+def get_campaign(
+    campaign_id: int,
+    current_user=Depends(get_current_user)
+):
+    campaign = get_campaign_by_id(campaign_id)
+
+    if not campaign:
+        raise HTTPException(
+            status_code=404,
+            detail="Campaign not found"
+        )
+
+    if campaign["user_id"] != current_user["id"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to access this campaign"
+        )
+
+    return campaign
 
 @app.get("/campaigns/{campaign_id}/emails")
 def get_campaign_emails(
