@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dashboard — PixelTrail</title>
+
+    <link rel="stylesheet" href="css/app.css">
+
+    <style>
+        /* ================================
+           DASHBOARD
+        ================================= */
+
+        .dashboard-shell {
+            min-height: 100vh;
+            display: flex;
+            background: var(--bg);
+        }
+
+        /* ================================
+           SIDEBAR
+        ================================= */
+
+        .sidebar {
+            width: 250px;
+            min-height: 100vh;
+            border-right: 1px solid var(--border);
+            background: rgba(10, 11, 16, 0.92);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 50;
+        }
+
+        .sidebar-brand {
+            height: 76px;
+            padding: 0 22px;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand-mark {
+            width: 38px;
+            height: 38px;
+            border-radius: 11px;
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            color: white;
+            background: linear-gradient(135deg, #7c5cff, #9b82ff);
+            box-shadow: 0 8px 25px rgba(124, 92, 255, 0.22);
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 750;
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-section {
+            padding: 25px 13px 10px;
+        }
+
+        .sidebar-label {
+            padding: 0 10px 9px;
+            color: var(--muted);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 700;
+        }
+
+        .sidebar-nav {
+            display: grid;
+            gap: 4px;
+        }
+
+        .nav-item {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 12px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            transition: 0.2s ease;
+        }
+
+        .nav-item:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .nav-item.active {
+            color: white;
+            background: rgba(124, 92, 255, 0.11);
+            border-color: rgba(124, 92, 255, 0.16);
+        }
+
+        .nav-icon {
+            width: 20px;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 15px 13px 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .user-mini {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 11px;
+            margin-bottom: 7px;
+        }
+
+        .user-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #7c5cff, #5ee7df);
+        }
+
+        .user-info {
+            min-width: 0;
+        }
+
+        .user-name {
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 650;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-email {
+            color: var(--muted);
+            font-size: 10px;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ================================
+           MAIN
+        ================================= */
+
+        .dashboard-main {
+            width: calc(100% - 250px);
+            margin-left: 250px;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            height: 76px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 34px;
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            background: rgba(8, 9, 13, 0.82);
+            backdrop-filter: blur(18px);
+        }
+
+        .page-title h1 {
+            margin: 0;
+            font-size: 19px;
+            letter-spacing: -0.5px;
+        }
+
+        .page-title p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .create-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 15px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .mobile-menu {
+            display: none;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            width: 38px;
+            height: 38px;
+            border-radius: 9px;
+            cursor: pointer;
+        }
+
+        /* ================================
+           CONTENT
+        ================================= */
+
+        .dashboard-content {
+            padding: 32px 34px 50px;
+            max-width: 1500px;
+        }
+
+        .welcome {
+            margin-bottom: 27px;
+        }
+
+        .welcome h2 {
+            margin: 0 0 6px;
+            font-size: 26px;
+            letter-spacing: -1px;
+        }
+
+        .welcome p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        /* ================================
+           STATS
+        ================================= */
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+            padding: 19px;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            background: linear-gradient(
+                145deg,
+                rgba(255,255,255,0.035),
+                rgba(255,255,255,0.012)
+            );
+        }
+
+        .stat-card::after {
+            content: "";
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            right: -45px;
+            top: -45px;
+            border-radius: 50%;
+            background: rgba(124, 92, 255, 0.07);
+            filter: blur(10px);
+        }
+
+        .stat-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .stat-icon {
+            width: 31px;
+            height: 31px;
+            display: grid;
+            place-items: center;
+            border-radius: 9px;
+            color: var(--primary-light);
+            background: rgba(124, 92, 255, 0.09);
+            font-size: 13px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            line-height: 1;
+            font-weight: 750;
+            letter-spacing: -1px;
+        }
+
+        .stat-sub {
+            color: var(--muted);
+            font-size: 10px;
+            margin-top: 8px;
+        }
+
+        /* ================================
+           SECTION HEADER
+        ================================= */
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 13px;
+        }
+
+        .section-header h3 {
+            margin: 0;
+            font-size: 15px;
+            letter-spacing: -0.3px;
+        }
+
+        .section-header span {
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        /* ================================
+           TABLE
+        ================================= */
+
+        .campaign-card {
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            background: var(--surface);
+            overflow: hidden;
+        }
+
+        .campaign-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .campaign-table th {
+            padding: 13px 18px;
+            text-align: left;
+            color: var(--muted);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .campaign-table td {
+            padding: 16px 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.045);
+            color: #dfe2ef;
+            font-size: 12px;
+        }
+
+        .campaign-table tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        .campaign-table tbody tr:hover {
+            background: rgba(255,255,255,0.018);
+        }
+
+        .campaign-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .campaign-name {
+            color: var(--text);
+            font-weight: 650;
+        }
+
+        .campaign-subject {
+            color: var(--muted);
+            font-size: 10px;
+            margin-top: 4px;
+            max-width: 300px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .metric {
+            color: var(--text);
+            font-weight: 650;
+        }
+
+        .date {
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 650;
+            text-transform: capitalize;
+        }
+
+        .status-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status-sent {
+            color: #86efac;
+            background: rgba(34,197,94,0.08);
+        }
+
+        .status-draft {
+            color: #c4b5fd;
+            background: rgba(124,92,255,0.08);
+        }
+
+        .status-failed {
+            color: #fca5a5;
+            background: rgba(239,68,68,0.08);
+        }
+
+        .status-partially_sent {
+            color: #fde68a;
+            background: rgba(245,158,11,0.08);
+        }
+
+        .view-button {
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            border-radius: 7px;
+            padding: 6px 9px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .view-button:hover {
+            color: var(--text);
+            border-color: rgba(255,255,255,0.16);
+        }
+
+        /* ================================
+           EMPTY / LOADING
+        ================================= */
+
+        .table-message {
+            padding: 65px 20px;
+            text-align: center;
+        }
+
+        .table-message-icon {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 15px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            color: var(--primary-light);
+            background: rgba(124,92,255,0.08);
+            font-size: 20px;
+        }
+
+        .table-message h4 {
+            margin: 0 0 6px;
+            font-size: 14px;
+        }
+
+        .table-message p {
+            margin: 0 auto 18px;
+            max-width: 350px;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .loading-dots {
+            display: inline-flex;
+            gap: 5px;
+        }
+
+        .loading-dots span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: loading 1s infinite ease-in-out;
+        }
+
+        .loading-dots span:nth-child(2) {
+            animation-delay: 0.15s;
+        }
+
+        .loading-dots span:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        @keyframes loading {
+            0%, 80%, 100% {
+                transform: scale(0.6);
+                opacity: 0.4;
+            }
+
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* ================================
+           TOAST
+        ================================= */
+
+        .dashboard-toast {
+            position: fixed;
+            right: 25px;
+            bottom: 25px;
+            z-index: 100;
+            max-width: 340px;
+            padding: 13px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #151720;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.35);
+            color: var(--text);
+            font-size: 12px;
+            opacity: 0;
+            transform: translateY(12px);
+            pointer-events: none;
+            transition: 0.25s ease;
+        }
+
+        .dashboard-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ================================
+           RESPONSIVE
+        ================================= */
+
+        @media (max-width: 1100px) {
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .sidebar {
+                width: 220px;
+            }
+
+            .dashboard-main {
+                width: calc(100% - 220px);
+                margin-left: 220px;
+            }
+
+            .dashboard-content {
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+        }
+
+        @media (max-width: 800px) {
+
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.25s ease;
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .dashboard-main {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .mobile-menu {
+                display: grid;
+                place-items: center;
+            }
+
+            .topbar {
+                padding: 0 18px;
+            }
+
+            .dashboard-content {
+                padding: 25px 18px 40px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .campaign-card {
+                overflow-x: auto;
+            }
+
+            .campaign-table {
+                min-width: 720px;
+            }
+        }
+
+        @media (max-width: 500px) {
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 9px;
+            }
+
+            .stat-card {
+                padding: 14px;
+            }
+
+            .stat-value {
+                font-size: 22px;
+            }
+
+            .stat-label {
+                font-size: 10px;
+            }
+
+            .topbar-actions .create-btn span {
+                display: none;
+            }
+
+            .welcome h2 {
+                font-size: 23px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="dashboard-shell">
+
+    <!-- =====================================
+         SIDEBAR
+    ====================================== -->
+
+    <aside class="sidebar" id="sidebar">
+
+        <div class="sidebar-brand">
+
+            <div class="brand-mark">P</div>
+
+            <div class="brand-name">
+                PixelTrail
+            </div>
+
+        </div>
+
+
+        <div class="sidebar-section">
+
+            <div class="sidebar-label">
+                Workspace
+            </div>
+
+            <nav class="sidebar-nav">
+
+                <button
+                    class="nav-item active"
+                    onclick="showDashboard()"
+                >
+                    <span class="nav-icon">⌂</span>
+                    Overview
+                </button>
+
+                <button
+                    class="nav-item"
+                    onclick="createCampaign()"
+                >
+                    <span class="nav-icon">✦</span>
+                    Campaigns
+                </button>
+
+                <button
+                    class="nav-item"
+                    onclick="showComingSoon('Recipients')"
+                >
+                    <span class="nav-icon">◎</span>
+                    Recipients
+                </button>
+
+            </nav>
+
+        </div>
+
+
+        <div class="sidebar-section">
+
+            <div class="sidebar-label">
+                System
+            </div>
+
+            <nav class="sidebar-nav">
+
+                <button
+                    class="nav-item"
+                    onclick="showComingSoon('Settings')"
+                >
+                    <span class="nav-icon">⚙</span>
+                    Settings
+                </button>
+
+            </nav>
+
+        </div>
+
+
+        <div class="sidebar-bottom">
+
+            <div class="user-mini">
+
+                <div class="user-avatar" id="userAvatar">
+                    U
+                </div>
+
+                <div class="user-info">
+
+                    <div
+                        class="user-name"
+                        id="sidebarUserName"
+                    >
+                        Loading...
+                    </div>
+
+                    <div
+                        class="user-email"
+                        id="sidebarUserEmail"
+                    >
+                        Loading...
+                    </div>
+
+                </div>
+
+            </div>
+
+            <button
+                class="nav-item"
+                onclick="logout()"
+            >
+                <span class="nav-icon">↪</span>
+                Log out
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =====================================
+         MAIN
+    ====================================== -->
+
+    <main class="dashboard-main">
+
+        <!-- TOPBAR -->
+
+        <header class="topbar">
+
+            <div style="display:flex;align-items:center;gap:12px;">
+
+                <button
+                    class="mobile-menu"
+                    onclick="toggleSidebar()"
+                >
+                    ☰
+                </button>
+
+                <div class="page-title">
+
+                    <h1>Overview</h1>
+
+                    <p>
+                        Monitor your email activity
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="topbar-actions">
+
+                <button
+                    class="btn btn-primary create-btn"
+                    onclick="createCampaign()"
+                >
+                    <span>＋</span>
+                    Create Campaign
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- CONTENT -->
+
+        <div class="dashboard-content">
+
+            <section class="welcome">
+
+                <h2 id="welcomeTitle">
+                    Welcome back 👋
+                </h2>
+
+                <p>
+                    Here's what's happening with your campaigns.
+                </p>
+
+            </section>
+
+
+            <!-- =====================================
+                 STATS
+            ====================================== -->
+
+            <section class="stats-grid">
+
+                <div class="stat-card">
+
+                    <div class="stat-top">
+
+                        <span class="stat-label">
+                            Campaigns
+                        </span>
+
+                        <div class="stat-icon">
+                            ✦
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="stat-value"
+                        id="campaignCount"
+                    >
+                        —
+                    </div>
+
+                    <div class="stat-sub">
+                        Total campaigns
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-top">
+
+                        <span class="stat-label">
+                            Recipients
+                        </span>
+
+                        <div class="stat-icon">
+                            ◎
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="stat-value"
+                        id="recipientCount"
+                    >
+                        —
+                    </div>
+
+                    <div class="stat-sub">
+                        Emails across campaigns
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-top">
+
+                        <span class="stat-label">
+                            Opens
+                        </span>
+
+                        <div class="stat-icon">
+                            ◉
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="stat-value"
+                        id="openCount"
+                    >
+                        —
+                    </div>
+
+                    <div class="stat-sub">
+                        Recorded email opens
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-top">
+
+                        <span class="stat-label">
+                            Clicks
+                        </span>
+
+                        <div class="stat-icon">
+                            ↗
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="stat-value"
+                        id="clickCount"
+                    >
+                        —
+                    </div>
+
+                    <div class="stat-sub">
+                        Tracked link clicks
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =====================================
+                 CAMPAIGNS
+            ====================================== -->
+
+            <section>
+
+                <div class="section-header">
+
+                    <h3>
+                        Recent campaigns
+                    </h3>
+
+                    <span id="campaignSummary">
+                        Loading...
+                    </span>
+
+                </div>
+
+
+                <div class="campaign-card">
+
+                    <table
+                        class="campaign-table"
+                        id="campaignTable"
+                    >
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Campaign
+                                </th>
+
+                                <th>
+                                    Recipients
+                                </th>
+
+                                <th>
+                                    Opens
+                                </th>
+
+                                <th>
+                                    Clicks
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    Created
+                                </th>
+
+                                <th>
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="campaignBody">
+
+                            <tr>
+
+                                <td colspan="7">
+
+                                    <div class="table-message">
+
+                                        <div class="loading-dots">
+                                            <span></span>
+                                            <span></span>
+                                            <span></span>
+                                        </div>
+
+                                        <p style="margin-top:14px;">
+                                            Loading your campaigns...
+                                        </p>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+<!-- TOAST -->
+
+<div
+    id="toast"
+    class="dashboard-toast"
+>
+</div>
+
+
+<script>
+
+    const API_URL = window.location.origin;
+
+    const token =
+        localStorage.getItem("pixeltrail_token");
+
+    const storedEmail =
+        localStorage.getItem("pixeltrail_user_email");
+
+
+    // =====================================
+    // AUTH CHECK
+    // =====================================
+
+    if (!token) {
+
+        window.location.href = "login.html";
+
+    }
+
+
+    // =====================================
+    // API HELPER
+    // =====================================
+
+    async function apiRequest(endpoint, options = {}) {
+
+        const headers = {
+            "Content-Type": "application/json",
+            ...(options.headers || {})
+        };
+
+        headers["Authorization"] =
+            `Bearer ${token}`;
+
+        const response = await fetch(
+            `${API_URL}${endpoint}`,
+            {
+                ...options,
+                headers
+            }
+        );
+
+
+        if (response.status === 401) {
+
+            logout();
+
+            return null;
+        }
+
+
+        let data = null;
+
+        try {
+            data = await response.json();
+        } catch {
+            data = null;
+        }
+
+
+        if (!response.ok) {
+
+            const errorMessage =
+                data?.detail ||
+                "Something went wrong.";
+
+            throw new Error(errorMessage);
+        }
+
+
+        return data;
+    }
+
+
+    // =====================================
+    // LOAD USER
+    // =====================================
+
+    async function loadUser() {
+
+        try {
+
+            const user =
+                await apiRequest("/auth/me");
+
+            if (!user) return;
+
+
+            const email = user.email || storedEmail || "User";
+
+            const firstPart =
+                email.split("@")[0];
+
+            const displayName =
+                firstPart
+                    .replace(/[._-]+/g, " ")
+                    .replace(/\b\w/g, char => char.toUpperCase());
+
+
+            document.getElementById(
+                "welcomeTitle"
+            ).textContent =
+                `Welcome back, ${displayName} 👋`;
+
+
+            document.getElementById(
+                "sidebarUserName"
+            ).textContent =
+                displayName;
+
+
+            document.getElementById(
+                "sidebarUserEmail"
+            ).textContent =
+                email;
+
+
+            document.getElementById(
+                "userAvatar"
+            ).textContent =
+                displayName.charAt(0).toUpperCase();
+
+
+        } catch (error) {
+
+            console.error(
+                "User loading error:",
+                error
+            );
+
+        }
+
+    }
+
+
+    // =====================================
+    // LOAD CAMPAIGNS
+    // =====================================
+
+    async function loadCampaigns() {
+
+        const body =
+            document.getElementById("campaignBody");
+
+        try {
+
+            const campaignsResponse =
+    await apiRequest("/campaigns");
+
+if (!campaignsResponse) return;
+
+
+/*
+ * The backend may return either:
+ *
+ * [...]
+ *
+ * or:
+ *
+ * { "campaigns": [...] }
+ *
+ * Normalize both formats into an array.
+ */
+
+const campaigns =
+    Array.isArray(campaignsResponse)
+        ? campaignsResponse
+        : (
+            Array.isArray(campaignsResponse.campaigns)
+                ? campaignsResponse.campaigns
+                : []
+        );
+
+
+document.getElementById(
+    "campaignCount"
+).textContent =
+    campaigns.length;
+
+
+            if (campaigns.length === 0) {
+
+                document.getElementById(
+                    "recipientCount"
+                ).textContent = "0";
+
+                document.getElementById(
+                    "openCount"
+                ).textContent = "0";
+
+                document.getElementById(
+                    "clickCount"
+                ).textContent = "0";
+
+                document.getElementById(
+                    "campaignSummary"
+                ).textContent =
+                    "No campaigns yet";
+
+
+                body.innerHTML = `
+
+                    <tr>
+
+                        <td colspan="7">
+
+                            <div class="table-message">
+
+                                <div class="table-message-icon">
+                                    ✦
+                                </div>
+
+                                <h4>
+                                    No campaigns yet
+                                </h4>
+
+                                <p>
+                                    Create your first campaign and
+                                    start tracking recipient engagement.
+                                </p>
+
+                                <button
+                                    class="btn btn-primary"
+                                    onclick="createCampaign()"
+                                >
+                                    Create your first campaign
+                                </button>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+                return;
+            }
+
+
+            document.getElementById(
+                "campaignSummary"
+            ).textContent =
+                `${campaigns.length} campaign${campaigns.length === 1 ? "" : "s"}`;
+
+
+            // Load individual email data
+            // for each campaign.
+
+            const campaignDetails =
+                await Promise.all(
+
+                    campaigns.map(async campaign => {
+
+                        try {
+
+                            const emailsResponse =
+                                await apiRequest(
+                                    `/campaigns/${campaign.id}/emails`
+                                );
+
+                            const emails =
+                                Array.isArray(emailsResponse)
+                                    ? emailsResponse
+                                    : (
+                                        Array.isArray(emailsResponse?.emails)
+                                            ? emailsResponse.emails
+                                            : []
+                                    );
+
+                            return {
+                                campaign,
+                                emails
+                            };
+                            
+
+                        } catch (error) {
+
+                            console.error(
+                                `Campaign ${campaign.id}:`,
+                                error
+                            );
+
+                            return {
+                                campaign,
+                                emails: []
+                            };
+
+                        }
+
+                    })
+
+                );
+
+
+            let totalRecipients = 0;
+            let totalOpens = 0;
+            let totalClicks = 0;
+
+
+            campaignDetails.forEach(item => {
+
+                item.emails.forEach(email => {
+
+                    totalRecipients += 1;
+
+                    totalOpens +=
+                        Number(email.open_count || 0);
+
+                    totalClicks +=
+                        Number(email.click_count || 0);
+
+                });
+
+            });
+
+
+            document.getElementById(
+                "recipientCount"
+            ).textContent =
+                formatNumber(totalRecipients);
+
+
+            document.getElementById(
+                "openCount"
+            ).textContent =
+                formatNumber(totalOpens);
+
+
+            document.getElementById(
+                "clickCount"
+            ).textContent =
+                formatNumber(totalClicks);
+
+
+            // Newest first
+
+            campaignDetails.sort(
+                (a, b) =>
+                    new Date(
+                        b.campaign.created_at
+                    ) -
+                    new Date(
+                        a.campaign.created_at
+                    )
+            );
+
+
+            // Show latest 10
+
+            const visibleCampaigns =
+                campaignDetails.slice(0, 10);
+
+
+            body.innerHTML =
+                visibleCampaigns
+                    .map(item =>
+                        createCampaignRow(
+                            item.campaign,
+                            item.emails
+                        )
+                    )
+                    .join("");
+
+
+        } catch (error) {
+
+            console.error(error);
+
+            body.innerHTML = `
+
+                <tr>
+
+                    <td colspan="7">
+
+                        <div class="table-message">
+
+                            <div class="table-message-icon">
+                                !
+                            </div>
+
+                            <h4>
+                                Unable to load campaigns
+                            </h4>
+
+                            <p>
+                                ${escapeHtml(error.message)}
+                            </p>
+
+                            <button
+                                class="btn btn-secondary"
+                                onclick="loadCampaigns()"
+                            >
+                                Try again
+                            </button>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+            `;
+
+            showToast(
+                error.message,
+                true
+            );
+
+        }
+
+    }
+
+
+    // =====================================
+    // CAMPAIGN ROW
+    // =====================================
+
+    function createCampaignRow(
+        campaign,
+        emails
+    ) {
+
+        const recipients =
+            emails.length;
+
+
+        const opens =
+            emails.reduce(
+                (sum, email) =>
+                    sum + Number(email.open_count || 0),
+                0
+            );
+
+
+        const clicks =
+            emails.reduce(
+                (sum, email) =>
+                    sum + Number(email.click_count || 0),
+                0
+            );
+
+
+        const status =
+            campaign.status || "draft";
+
+
+        const created =
+            formatDate(campaign.created_at);
+
+
+        return `
+
+            <tr>
+
+                <td>
+
+                    <div class="campaign-name">
+                        ${escapeHtml(
+                            campaign.name || "Untitled campaign"
+                        )}
+                    </div>
+
+                    <div class="campaign-subject">
+                        ${escapeHtml(
+                            campaign.subject || "No subject"
+                        )}
+                    </div>
+
+                </td>
+
+
+                <td>
+                    <span class="metric">
+                        ${formatNumber(recipients)}
+                    </span>
+                </td>
+
+
+                <td>
+                    <span class="metric">
+                        ${formatNumber(opens)}
+                    </span>
+                </td>
+
+
+                <td>
+                    <span class="metric">
+                        ${formatNumber(clicks)}
+                    </span>
+                </td>
+
+
+                <td>
+
+                    <span class="
+                        status-pill
+                        status-${escapeHtml(status)}
+                    ">
+
+                        <span class="status-dot"></span>
+
+                        ${escapeHtml(
+                            status.replaceAll("_", " ")
+                        )}
+
+                    </span>
+
+                </td>
+
+
+                <td>
+                    <span class="date">
+                        ${created}
+                    </span>
+                </td>
+
+
+                <td>
+
+                    <button
+                        class="view-button"
+                        onclick="viewCampaign(${campaign.id})"
+                    >
+                        View
+                    </button>
+
+                </td>
+
+            </tr>
+
+        `;
+
+    }
+
+
+    // =====================================
+    // CREATE CAMPAIGN
+    // =====================================
+
+    function createCampaign() {
+
+        /*
+         * The campaign builder will be our
+         * next major frontend page.
+         */
+
+        window.location.href =
+            "campaign.html";
+
+    }
+
+
+    // =====================================
+    // VIEW CAMPAIGN
+    // =====================================
+
+    function viewCampaign(id) {
+
+        window.location.href =
+            `campaign.html?id=${id}`;
+
+    }
+
+
+    // =====================================
+    // LOGOUT
+    // =====================================
+
+    function logout() {
+
+        localStorage.removeItem(
+            "pixeltrail_token"
+        );
+
+        localStorage.removeItem(
+            "pixeltrail_user_email"
+        );
+
+        window.location.href =
+            "login.html";
+
+    }
+
+
+    // =====================================
+    // MOBILE SIDEBAR
+    // =====================================
+
+    function toggleSidebar() {
+
+        document
+            .getElementById("sidebar")
+            .classList.toggle("mobile-open");
+
+    }
+
+
+    // =====================================
+    // COMING SOON
+    // =====================================
+
+    function showComingSoon(name) {
+
+        showToast(
+            `${name} section is coming next.`
+        );
+
+    }
+
+
+    // =====================================
+    // TOAST
+    // =====================================
+
+    let toastTimer;
+
+    function showToast(
+        text,
+        isError = false
+    ) {
+
+        const toast =
+            document.getElementById("toast");
+
+        toast.textContent = text;
+
+        toast.style.borderColor =
+            isError
+                ? "rgba(239,68,68,0.25)"
+                : "var(--border)";
+
+
+        toast.classList.add("show");
+
+
+        clearTimeout(toastTimer);
+
+        toastTimer =
+            setTimeout(() => {
+
+                toast.classList.remove("show");
+
+            }, 3500);
+
+    }
+
+
+    // =====================================
+    // HELPERS
+    // =====================================
+
+    function formatNumber(number) {
+
+        return Number(number || 0)
+            .toLocaleString();
+
+    }
+
+
+    function formatDate(dateString) {
+
+        if (!dateString) {
+            return "—";
+        }
+
+        const date =
+            new Date(dateString);
+
+        if (Number.isNaN(date.getTime())) {
+            return "—";
+        }
+
+        return date.toLocaleDateString(
+            undefined,
+            {
+                month: "short",
+                day: "numeric",
+                year: "numeric"
+            }
+        );
+
+    }
+
+
+    function escapeHtml(value) {
+
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+
+    }
+
+
+    // =====================================
+    // INITIALIZE
+    // =====================================
+
+    loadUser();
+    loadCampaigns();
+
+</script>
+
+</body>
+</html>

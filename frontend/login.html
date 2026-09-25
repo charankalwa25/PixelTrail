@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>PixelTrail — Sign In</title>
+
+    <link
+        rel="stylesheet"
+        href="css/app.css"
+    >
+
+    <style>
+        /* ============================= */
+        /* LOGIN PAGE */
+        /* ============================= */
+
+        .auth-page {
+            min-height: 100vh;
+
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+
+            overflow: hidden;
+        }
+
+        /* LEFT SIDE */
+
+        .auth-showcase {
+            position: relative;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+
+            padding: 46px;
+
+            overflow: hidden;
+
+            border-right: 1px solid var(--border);
+        }
+
+        .auth-showcase::before {
+            content: "";
+
+            position: absolute;
+
+            width: 600px;
+            height: 600px;
+
+            top: -250px;
+            left: -180px;
+
+            border-radius: 50%;
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(124, 92, 255, 0.20),
+                    transparent 68%
+                );
+
+            pointer-events: none;
+        }
+
+        .auth-showcase::after {
+            content: "";
+
+            position: absolute;
+
+            width: 500px;
+            height: 500px;
+
+            right: -260px;
+            bottom: -250px;
+
+            border-radius: 50%;
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(94, 231, 223, 0.09),
+                    transparent 70%
+                );
+
+            pointer-events: none;
+        }
+
+        .auth-brand {
+            position: relative;
+            z-index: 2;
+
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .auth-brand .logo-mark {
+            width: 38px;
+            height: 38px;
+        }
+
+        .auth-brand-name {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.6px;
+        }
+
+        .showcase-content {
+            position: relative;
+            z-index: 2;
+
+            max-width: 570px;
+        }
+
+        .showcase-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+
+            padding: 7px 11px;
+
+            margin-bottom: 22px;
+
+            border: 1px solid rgba(124, 92, 255, 0.22);
+
+            border-radius: 999px;
+
+            background: rgba(124, 92, 255, 0.07);
+
+            color: #b8aaff;
+
+            font-size: 10px;
+            font-weight: 700;
+
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .showcase-eyebrow::before {
+            content: "";
+
+            width: 6px;
+            height: 6px;
+
+            border-radius: 50%;
+
+            background: var(--primary-light);
+
+            box-shadow:
+                0 0 10px rgba(155, 130, 255, 0.8);
+        }
+
+        .showcase-title {
+            max-width: 600px;
+
+            font-size: clamp(42px, 4.5vw, 66px);
+
+            line-height: 1.02;
+
+            letter-spacing: -3px;
+
+            font-weight: 800;
+        }
+
+        .showcase-title span {
+            background:
+                linear-gradient(
+                    110deg,
+                    #ffffff 15%,
+                    #a99aff 55%,
+                    #6fe9df 100%
+                );
+
+            -webkit-background-clip: text;
+            background-clip: text;
+
+            color: transparent;
+        }
+
+        .showcase-description {
+            max-width: 510px;
+
+            margin-top: 22px;
+
+            color: #8e94aa;
+
+            font-size: 14px;
+
+            line-height: 1.75;
+        }
+
+        .feature-row {
+            display: flex;
+            gap: 10px;
+
+            margin-top: 32px;
+        }
+
+        .feature-pill {
+            padding: 9px 12px;
+
+            border: 1px solid var(--border);
+
+            border-radius: 9px;
+
+            background: rgba(255, 255, 255, 0.025);
+
+            color: #a7acc0;
+
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .showcase-footer {
+            position: relative;
+            z-index: 2;
+
+            color: #505668;
+
+            font-size: 10px;
+        }
+
+        /* RIGHT SIDE */
+
+        .auth-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 40px;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-heading {
+            margin-bottom: 30px;
+        }
+
+        .auth-heading h1 {
+            font-size: 27px;
+
+            letter-spacing: -0.8px;
+
+            font-weight: 700;
+        }
+
+        .auth-heading p {
+            margin-top: 7px;
+
+            color: var(--muted);
+
+            font-size: 12px;
+        }
+
+        .auth-form {
+            margin-top: 26px;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-wrapper .input {
+            padding-right: 75px;
+        }
+
+        .password-toggle {
+            position: absolute;
+
+            right: 11px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            border: 0;
+
+            background: transparent;
+
+            color: #73798c;
+
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .password-toggle:hover {
+            color: var(--text);
+        }
+
+        .auth-submit {
+            width: 100%;
+
+            margin-top: 8px;
+
+            padding: 13px;
+        }
+
+        .auth-message {
+            min-height: 17px;
+
+            margin-top: 13px;
+
+            text-align: center;
+
+            font-size: 11px;
+        }
+
+        .auth-message.error {
+            color: var(--danger);
+        }
+
+        .auth-message.success {
+            color: var(--success);
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            margin: 25px 0;
+
+            color: #505668;
+
+            font-size: 10px;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: "";
+
+            flex: 1;
+
+            height: 1px;
+
+            background: var(--border);
+        }
+
+        .auth-switch {
+            text-align: center;
+
+            color: var(--muted);
+
+            font-size: 11px;
+        }
+
+        .auth-switch a {
+            margin-left: 4px;
+
+            color: var(--primary-light);
+
+            font-weight: 600;
+        }
+
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+
+        .security-note {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+
+            margin-top: 26px;
+
+            color: #555b6d;
+
+            font-size: 9px;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 850px) {
+
+            .auth-page {
+                grid-template-columns: 1fr;
+            }
+
+            .auth-showcase {
+                min-height: 420px;
+
+                padding: 30px;
+            }
+
+            .showcase-content {
+                margin-top: auto;
+            }
+
+            .showcase-title {
+                font-size: 43px;
+                letter-spacing: -2px;
+            }
+
+            .showcase-description {
+                font-size: 12px;
+            }
+
+            .feature-row {
+                flex-wrap: wrap;
+            }
+
+            .showcase-footer {
+                margin-top: 30px;
+            }
+
+            .auth-panel {
+                padding: 50px 25px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="auth-page">
+
+        <!-- ========================= -->
+        <!-- SHOWCASE -->
+        <!-- ========================= -->
+
+        <section class="auth-showcase">
+
+            <div class="auth-brand">
+
+                <div class="logo-mark">
+                    <span>✦</span>
+                </div>
+
+                <div class="auth-brand-name">
+                    Pixel<span style="color:#9b82ff;">Trail</span>
+                </div>
+
+            </div>
+
+
+            <div class="showcase-content">
+
+                <div class="showcase-eyebrow">
+                    Email intelligence platform
+                </div>
+
+                <h2 class="showcase-title">
+                    Know when your
+                    <span>message moves.</span>
+                </h2>
+
+                <p class="showcase-description">
+                    Send smarter emails, track engagement in real time,
+                    and understand what happens after you press send —
+                    recipient by recipient.
+                </p>
+
+                <div class="feature-row">
+
+                    <div class="feature-pill">
+                        ● Open tracking
+                    </div>
+
+                    <div class="feature-pill">
+                        ↗ Click tracking
+                    </div>
+
+                    <div class="feature-pill">
+                        ✓ Confirm Seen
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="showcase-footer">
+                © 2026 PixelTrail. Email intelligence, simplified.
+            </div>
+
+        </section>
+
+
+        <!-- ========================= -->
+        <!-- LOGIN PANEL -->
+        <!-- ========================= -->
+
+        <section class="auth-panel">
+
+            <div class="auth-card">
+
+                <div class="auth-heading">
+
+                    <h1>
+                        Welcome back
+                    </h1>
+
+                    <p>
+                        Sign in to continue to your PixelTrail workspace.
+                    </p>
+
+                </div>
+
+
+                <form
+                    id="loginForm"
+                    class="auth-form"
+                >
+
+                    <div class="form-group">
+
+                        <label
+                            class="form-label"
+                            for="email"
+                        >
+                            Email address
+                        </label>
+
+                        <input
+                            class="input"
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="you@company.com"
+                            autocomplete="email"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label
+                            class="form-label"
+                            for="password"
+                        >
+                            Password
+                        </label>
+
+                        <div class="password-wrapper">
+
+                            <input
+                                class="input"
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Enter your password"
+                                autocomplete="current-password"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                id="passwordToggle"
+                            >
+                                Show
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary auth-submit"
+                        id="loginButton"
+                    >
+                        Sign in
+                    </button>
+
+
+                    <div
+                        id="authMessage"
+                        class="auth-message"
+                    ></div>
+
+                </form>
+
+
+                <div class="auth-divider">
+                    <span>PIXELTRAIL</span>
+                </div>
+
+
+                <div class="auth-switch">
+
+                    Don't have an account?
+
+                    <a href="register.html">
+                        Create one
+                    </a>
+
+                </div>
+
+
+                <div class="security-note">
+                    <span>🔒</span>
+                    Your workspace is protected with secure authentication.
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <script>
+
+        const API_URL =
+            window.location.origin;
+
+
+        const loginForm =
+            document.getElementById("loginForm");
+
+        const loginButton =
+            document.getElementById("loginButton");
+
+        const authMessage =
+            document.getElementById("authMessage");
+
+        const password =
+            document.getElementById("password");
+
+        const passwordToggle =
+            document.getElementById("passwordToggle");
+
+
+        /* ============================= */
+        /* PASSWORD VISIBILITY */
+        /* ============================= */
+
+        passwordToggle.addEventListener(
+            "click",
+            () => {
+
+                const isPassword =
+                    password.type === "password";
+
+                password.type =
+                    isPassword
+                        ? "text"
+                        : "password";
+
+                passwordToggle.textContent =
+                    isPassword
+                        ? "Hide"
+                        : "Show";
+            }
+        );
+
+
+        /* ============================= */
+        /* LOGIN */
+        /* ============================= */
+
+        loginForm.addEventListener(
+            "submit",
+            async (event) => {
+
+                event.preventDefault();
+
+                authMessage.textContent = "";
+                authMessage.className =
+                    "auth-message";
+
+                loginButton.disabled = true;
+
+                loginButton.textContent =
+                    "Signing in...";
+
+
+                const email =
+                    document
+                        .getElementById("email")
+                        .value
+                        .trim()
+                        .toLowerCase();
+
+                const passwordValue =
+                    password.value;
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            `${API_URL}/auth/login`,
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body: JSON.stringify({
+                                    email: email,
+                                    password: passwordValue
+                                })
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            data.detail ||
+                            "Unable to sign in."
+                        );
+                    }
+
+
+                    /*
+                     * Store the JWT locally.
+                     * We will use this token for
+                     * authenticated API requests.
+                     */
+
+                    localStorage.setItem(
+                        "pixeltrail_token",
+                        data.access_token
+                    );
+
+                    localStorage.setItem(
+                        "pixeltrail_user_email",
+                        data.email
+                    );
+
+
+                    authMessage.textContent =
+                        "Login successful. Redirecting...";
+
+                    authMessage.className =
+                        "auth-message success";
+
+
+                    loginButton.textContent =
+                        "Success ✓";
+
+
+                    setTimeout(
+                        () => {
+                            window.location.href =
+                                "dashboard.html";
+                        },
+                        500
+                    );
+
+                } catch (error) {
+
+                    authMessage.textContent =
+                        error.message;
+
+                    authMessage.className =
+                        "auth-message error";
+
+                    loginButton.disabled = false;
+
+                    loginButton.textContent =
+                        "Sign in";
+                }
+
+            }
+        );
+
+    </script>
+
+</body>
+</html>

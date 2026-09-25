@@ -1,0 +1,3441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Campaign Builder — PixelTrail</title>
+
+    <link rel="stylesheet" href="css/app.css">
+
+    <style>
+        /* =========================================
+           CAMPAIGN BUILDER
+        ========================================= */
+
+        .builder-shell {
+            min-height: 100vh;
+            background:
+                radial-gradient(
+                    circle at 80% 0%,
+                    rgba(124, 92, 255, 0.08),
+                    transparent 28%
+                ),
+                var(--bg);
+        }
+
+        .builder-topbar {
+            height: 76px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 34px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(8, 9, 13, 0.82);
+            backdrop-filter: blur(18px);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        .builder-heading {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            border-radius: 9px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 15px;
+            transition: 0.2s ease;
+        }
+
+        .back-button:hover {
+            color: var(--text);
+            border-color: rgba(255,255,255,0.16);
+            transform: translateX(-1px);
+        }
+
+        .builder-heading h1 {
+            margin: 0;
+            font-size: 18px;
+            letter-spacing: -0.5px;
+        }
+
+        .builder-heading p {
+            margin: 3px 0 0;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .builder-actions {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .builder-actions .btn {
+            min-height: 38px;
+            font-size: 11px;
+        }
+
+        .builder-content {
+            width: 100%;
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 30px 34px 60px;
+        }
+
+        /* =========================================
+           PROGRESS
+        ========================================= */
+
+        .builder-progress {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 27px;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 650;
+        }
+
+        .progress-number {
+            width: 24px;
+            height: 24px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 10px;
+        }
+
+        .progress-step.active {
+            color: var(--text);
+        }
+
+        .progress-step.active .progress-number {
+            color: white;
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 0 18px rgba(124,92,255,0.25);
+        }
+
+        .progress-line {
+            width: 45px;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* =========================================
+           LAYOUT
+        ========================================= */
+
+        .builder-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.65fr);
+            gap: 20px;
+            align-items: start;
+        }
+
+        .builder-left {
+            display: grid;
+            gap: 18px;
+            min-width: 0;
+        }
+
+        .builder-right {
+            position: sticky;
+            top: 106px;
+            display: grid;
+            gap: 16px;
+        }
+
+        .builder-card {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: rgba(16, 17, 22, 0.88);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 19px 21px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-header h2 {
+            margin: 0;
+            font-size: 14px;
+            letter-spacing: -0.25px;
+        }
+
+        .card-header p {
+            margin: 5px 0 0;
+            color: var(--muted);
+            font-size: 10px;
+            line-height: 1.5;
+        }
+
+        .card-body {
+            padding: 21px;
+        }
+
+        /* =========================================
+           FORM
+        ========================================= */
+
+        .form-grid {
+            display: grid;
+            gap: 17px;
+        }
+
+        .form-group {
+            display: grid;
+            gap: 7px;
+        }
+
+        .form-group label {
+            color: #dfe2ef;
+            font-size: 11px;
+            font-weight: 650;
+        }
+
+        .field-hint {
+            color: var(--muted);
+            font-size: 10px;
+            line-height: 1.5;
+        }
+
+        .field-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        /* =========================================
+           RECIPIENTS
+        ========================================= */
+
+        .recipient-input {
+            width: 100%;
+            min-height: 180px;
+            resize: vertical;
+            font-family: inherit;
+            line-height: 1.65;
+        }
+
+        .recipient-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .recipient-stats {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .recipient-stat {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 8px;
+            border-radius: 7px;
+            background: rgba(255,255,255,0.035);
+            color: var(--muted);
+            font-size: 10px;
+        }
+
+        .recipient-stat strong {
+            color: var(--text);
+        }
+
+        .recipient-stat.valid strong {
+            color: #86efac;
+        }
+
+        .recipient-stat.invalid strong {
+            color: #fca5a5;
+        }
+
+        .clear-recipients {
+            border: 0;
+            background: transparent;
+            color: var(--muted);
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .clear-recipients:hover {
+            color: #fca5a5;
+        }
+
+        .invalid-list {
+            display: none;
+            margin-top: 12px;
+            padding: 11px 13px;
+            border: 1px solid rgba(239,68,68,0.16);
+            border-radius: 9px;
+            background: rgba(239,68,68,0.05);
+        }
+
+        .invalid-list.show {
+            display: block;
+        }
+
+        .invalid-list-title {
+            color: #fca5a5;
+            font-size: 10px;
+            font-weight: 700;
+            margin-bottom: 7px;
+        }
+
+        .invalid-emails {
+            color: #dca7a7;
+            font-size: 10px;
+            line-height: 1.7;
+            word-break: break-word;
+        }
+
+        /* =========================================
+           EDITOR
+        ========================================= */
+
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-bottom: 0;
+            border-radius: 10px 10px 0 0;
+            background: var(--surface-2);
+        }
+
+        .editor-tool {
+            min-width: 29px;
+            height: 29px;
+            padding: 0 7px;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 650;
+        }
+
+        .editor-tool:hover {
+            color: var(--text);
+            background: rgba(255,255,255,0.06);
+        }
+
+        .editor-divider {
+            width: 1px;
+            height: 19px;
+            background: var(--border);
+            margin: 0 3px;
+        }
+
+        .editor-area {
+            min-height: 300px;
+            padding: 17px;
+            outline: none;
+            border: 1px solid var(--border);
+            border-radius: 0 0 10px 10px;
+            background: #0d0e13;
+            color: var(--text);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .editor-area:empty::before {
+            content: attr(data-placeholder);
+            color: #62687a;
+            pointer-events: none;
+        }
+
+        .personalization-row {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .personalization-label {
+            color: var(--muted);
+            font-size: 10px;
+            margin-right: 3px;
+        }
+
+        .variable-chip {
+            padding: 5px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(124,92,255,0.18);
+            background: rgba(124,92,255,0.07);
+            color: var(--primary-light);
+            font-family: monospace;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .variable-chip:hover {
+            background: rgba(124,92,255,0.13);
+        }
+
+        /* =========================================
+           TRACKING OPTIONS
+        ========================================= */
+
+        .tracking-list {
+            display: grid;
+            gap: 9px;
+        }
+
+        .tracking-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 13px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.015);
+        }
+
+        .tracking-info {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+
+        .tracking-icon {
+            width: 33px;
+            height: 33px;
+            display: grid;
+            place-items: center;
+            border-radius: 9px;
+            color: var(--primary-light);
+            background: rgba(124,92,255,0.08);
+            font-size: 13px;
+        }
+
+        .tracking-title {
+            color: var(--text);
+            font-size: 11px;
+            font-weight: 650;
+        }
+
+        .tracking-description {
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 9px;
+        }
+
+        .toggle {
+            width: 39px;
+            height: 21px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .toggle input {
+            display: none;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            inset: 0;
+            border-radius: 999px;
+            background: #272a35;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .toggle-slider::before {
+            content: "";
+            width: 15px;
+            height: 15px;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            border-radius: 50%;
+            background: #858a9b;
+            transition: 0.2s ease;
+        }
+
+        .toggle input:checked + .toggle-slider {
+            background: var(--primary);
+        }
+
+        .toggle input:checked + .toggle-slider::before {
+            transform: translateX(18px);
+            background: white;
+        }
+
+        /* =========================================
+           PREVIEW
+        ========================================= */
+
+        .preview-card {
+            overflow: hidden;
+        }
+
+        .preview-header {
+            padding: 17px 19px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-header h3 {
+            margin: 0;
+            font-size: 13px;
+        }
+
+        .preview-label {
+            color: var(--muted);
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .email-preview {
+            margin: 15px;
+            border-radius: 11px;
+            border: 1px solid #e6e8ef;
+            background: #ffffff;
+            color: #20222a;
+            overflow: hidden;
+            box-shadow: 0 15px 45px rgba(0,0,0,0.2);
+        }
+
+        .email-preview-top {
+            padding: 13px 15px;
+            border-bottom: 1px solid #e7e8ed;
+            background: #fafafa;
+        }
+
+        .preview-from {
+            font-size: 9px;
+            color: #777b86;
+        }
+
+        .preview-subject {
+            margin-top: 5px;
+            color: #1f2025;
+            font-size: 13px;
+            font-weight: 700;
+            word-break: break-word;
+        }
+
+        .preview-recipient {
+            margin-top: 4px;
+            color: #999da7;
+            font-size: 8px;
+        }
+
+        .email-preview-body {
+            min-height: 210px;
+            padding: 18px;
+            color: #333640;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.7;
+            word-break: break-word;
+        }
+
+        .email-preview-body a {
+            color: #5d46cf;
+        }
+
+        .preview-footer {
+            padding: 12px 15px;
+            border-top: 1px solid #e7e8ed;
+            color: #999da7;
+            font-size: 8px;
+            line-height: 1.5;
+        }
+
+        /* =========================================
+           SUMMARY
+        ========================================= */
+
+        .summary-list {
+            display: grid;
+            gap: 0;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .summary-row:last-child {
+            border-bottom: 0;
+        }
+
+        .summary-label {
+            color: var(--muted);
+            font-size: 10px;
+        }
+
+        .summary-value {
+            color: var(--text);
+            font-size: 10px;
+            font-weight: 650;
+            text-align: right;
+            max-width: 190px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .summary-value.success {
+            color: #86efac;
+        }
+
+        /* =========================================
+           ALERT
+        ========================================= */
+
+        .builder-alert {
+            display: none;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(239,68,68,0.2);
+            background: rgba(239,68,68,0.06);
+            color: #fca5a5;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .builder-alert.show {
+            display: block;
+        }
+
+        /* =========================================
+           SEND MODAL
+        ========================================= */
+
+        .send-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 100;
+            background: rgba(0,0,0,0.68);
+            backdrop-filter: blur(8px);
+        }
+
+        .send-modal.show {
+            display: flex;
+        }
+
+        .modal-card {
+            width: 100%;
+            max-width: 460px;
+            padding: 25px;
+            border: 1px solid var(--border);
+            border-radius: 17px;
+            background: #111219;
+            box-shadow: 0 30px 90px rgba(0,0,0,0.5);
+        }
+
+        .modal-icon {
+            width: 45px;
+            height: 45px;
+            display: grid;
+            place-items: center;
+            margin-bottom: 17px;
+            border-radius: 13px;
+            color: var(--primary-light);
+            background: rgba(124,92,255,0.1);
+            font-size: 18px;
+        }
+
+        .modal-card h2 {
+            margin: 0 0 8px;
+            font-size: 19px;
+            letter-spacing: -0.5px;
+        }
+
+        .modal-card > p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.65;
+        }
+
+        .modal-summary {
+            margin: 18px 0;
+            padding: 13px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.035);
+        }
+
+        .modal-summary-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 5px 0;
+            font-size: 10px;
+        }
+
+        .modal-summary-row span:first-child {
+            color: var(--muted);
+        }
+
+        .modal-summary-row span:last-child {
+            color: var(--text);
+            font-weight: 650;
+            text-align: right;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        /* =========================================
+           TOAST
+        ========================================= */
+
+        .toast {
+            position: fixed;
+            right: 25px;
+            bottom: 25px;
+            z-index: 120;
+            max-width: 350px;
+            padding: 13px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #151720;
+            color: var(--text);
+            font-size: 11px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+            opacity: 0;
+            transform: translateY(12px);
+            pointer-events: none;
+            transition: 0.25s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* =========================================
+           RESPONSIVE
+        ========================================= */
+
+        @media (max-width: 1050px) {
+
+            .builder-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .builder-right {
+                position: static;
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 750px) {
+
+            .builder-topbar {
+                padding: 0 18px;
+            }
+
+            .builder-content {
+                padding: 22px 18px 45px;
+            }
+
+            .builder-actions .secondary-action {
+                display: none;
+            }
+
+            .builder-progress {
+                overflow-x: auto;
+                padding-bottom: 3px;
+            }
+
+            .progress-line {
+                flex-shrink: 0;
+            }
+
+            .field-row {
+                grid-template-columns: 1fr;
+            }
+
+            .builder-right {
+                grid-template-columns: 1fr;
+            }
+
+            .builder-heading p {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+
+            .builder-heading h1 {
+                font-size: 15px;
+            }
+
+            .builder-content {
+                padding-left: 13px;
+                padding-right: 13px;
+            }
+
+            .card-body {
+                padding: 16px;
+            }
+
+            .card-header {
+                padding: 16px;
+            }
+
+            .builder-actions .btn {
+                padding: 8px 11px;
+            }
+        }
+
+        /* =========================================================
+   RECIPIENT ACTIVITY
+   ========================================================= */
+
+.recipient-activity-card {
+    margin-top: 24px;
+    overflow: hidden;
+}
+
+.recipient-activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 22px 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.recipient-title-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.recipient-title-row h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.recipient-title-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(124, 92, 255, 0.12);
+    border: 1px solid rgba(124, 92, 255, 0.22);
+
+    color: var(--primary-light);
+    font-size: 15px;
+}
+
+.recipient-activity-header p {
+    margin: 7px 0 0 43px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.live-tracking-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 8px 12px;
+
+    border-radius: 999px;
+
+    background: rgba(94, 231, 223, 0.07);
+    border: 1px solid rgba(94, 231, 223, 0.16);
+
+    color: var(--accent);
+
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+
+    white-space: nowrap;
+}
+
+.live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+
+    background: var(--accent);
+
+    box-shadow: 0 0 10px rgba(94, 231, 223, 0.7);
+
+    animation: recipientPulse 2s infinite;
+}
+
+@keyframes recipientPulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.45;
+        transform: scale(0.8);
+    }
+}
+
+.recipient-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.recipient-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+}
+
+.recipient-table thead {
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.recipient-table th {
+    padding: 14px 20px;
+
+    text-align: left;
+
+    color: var(--muted);
+
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: 0.07em;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.recipient-table td {
+    padding: 17px 20px;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+
+    font-size: 13px;
+}
+
+.recipient-table tbody tr:not(.recipient-empty-row) {
+    transition:
+        background 0.18s ease,
+        transform 0.18s ease;
+}
+
+.recipient-table tbody tr:not(.recipient-empty-row):hover {
+    background: rgba(124, 92, 255, 0.035);
+}
+
+.recipient-empty-row td {
+    padding: 0;
+}
+
+.recipient-empty-state {
+    min-height: 170px;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    padding: 35px 20px;
+}
+
+.recipient-empty-icon {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 13px;
+
+    border-radius: 12px;
+
+    background: rgba(124, 92, 255, 0.09);
+    border: 1px solid rgba(124, 92, 255, 0.16);
+
+    color: var(--primary-light);
+
+    font-size: 18px;
+}
+
+.recipient-empty-state strong {
+    display: block;
+
+    color: var(--text);
+
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.recipient-empty-state p {
+    max-width: 390px;
+
+    margin: 7px auto 0;
+
+    color: var(--muted);
+
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+
+/* Individual recipient styling */
+
+.recipient-person {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.recipient-avatar {
+    width: 34px;
+    height: 34px;
+
+    flex: 0 0 34px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: linear-gradient(
+        135deg,
+        rgba(124, 92, 255, 0.25),
+        rgba(94, 231, 223, 0.12)
+    );
+
+    border: 1px solid rgba(124, 92, 255, 0.2);
+
+    color: var(--text);
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.recipient-email {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 550;
+}
+
+.recipient-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 5px 9px;
+
+    border-radius: 999px;
+
+    background: rgba(124, 92, 255, 0.08);
+    border: 1px solid rgba(124, 92, 255, 0.14);
+
+    color: var(--primary-light);
+
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.recipient-status-dot {
+    width: 6px;
+    height: 6px;
+
+    border-radius: 50%;
+
+    background: currentColor;
+}
+
+.recipient-metric {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 32px;
+    height: 28px;
+
+    padding: 0 9px;
+
+    border-radius: 8px;
+
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+
+    color: var(--text);
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.recipient-confirmed {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    color: var(--success);
+
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.recipient-confirmed-icon {
+    width: 18px;
+    height: 18px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: rgba(34, 197, 94, 0.10);
+    border: 1px solid rgba(34, 197, 94, 0.18);
+}
+
+    </style>
+</head>
+
+<body>
+
+<div class="builder-shell">
+
+    <!-- =========================================
+         TOP BAR
+    ========================================== -->
+
+    <header class="builder-topbar">
+
+        <div class="builder-heading">
+
+            <button
+                class="back-button"
+                onclick="goBack()"
+                title="Back to dashboard"
+            >
+                ←
+            </button>
+
+            <div>
+                <h1 id="pageTitle">
+                    Create Campaign
+                </h1>
+
+                <p>
+                    Build, personalize and send your campaign
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="builder-actions">
+
+            <button
+                class="btn btn-secondary secondary-action"
+                onclick="goBack()"
+            >
+                Cancel
+            </button>
+
+            <button
+                class="btn btn-secondary"
+                id="saveButton"
+                onclick="saveCampaign()"
+            >
+                Save Draft
+            </button>
+
+            <button
+                class="btn btn-primary"
+                id="sendButton"
+                onclick="openSendModal()"
+            >
+                Send Campaign
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================================
+         CONTENT
+    ========================================== -->
+
+    <main class="builder-content">
+
+        <!-- PROGRESS -->
+
+        <div class="builder-progress">
+
+            <div class="progress-step active">
+                <span class="progress-number">1</span>
+                Campaign
+            </div>
+
+            <div class="progress-line"></div>
+
+            <div class="progress-step active">
+                <span class="progress-number">2</span>
+                Recipients
+            </div>
+
+            <div class="progress-line"></div>
+
+            <div class="progress-step active">
+                <span class="progress-number">3</span>
+                Message
+            </div>
+
+            <div class="progress-line"></div>
+
+            <div class="progress-step">
+                <span class="progress-number">4</span>
+                Send
+            </div>
+
+        </div>
+
+
+        <div
+            id="builderAlert"
+            class="builder-alert"
+        ></div>
+
+
+        <div class="builder-grid">
+
+            <!-- =====================================
+                 LEFT
+            ====================================== -->
+
+            <div class="builder-left">
+
+                <!-- CAMPAIGN DETAILS -->
+
+                <section class="builder-card">
+
+                    <div class="card-header">
+
+                        <h2>
+                            Campaign details
+                        </h2>
+
+                        <p>
+                            Give your campaign a name and define
+                            the email subject.
+                        </p>
+
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="form-grid">
+
+                            <div class="form-group">
+
+                                <label for="campaignName">
+                                    Campaign name
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="campaignName"
+                                    placeholder="e.g. September Product Update"
+                                    maxlength="120"
+                                    autocomplete="off"
+                                >
+
+                                <div class="field-hint">
+                                    This is only visible inside PixelTrail.
+                                </div>
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label for="subject">
+                                    Email subject
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="subject"
+                                    placeholder="e.g. Here's what's new..."
+                                    maxlength="200"
+                                >
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- RECIPIENTS -->
+
+                <section class="builder-card">
+
+                    <div class="card-header">
+
+                        <h2>
+                            Recipients
+                        </h2>
+
+                        <p>
+                            Paste your recipient list. PixelTrail
+                            automatically validates and removes duplicates.
+                        </p>
+
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="form-group">
+
+                            <label for="recipients">
+                                Recipient emails
+                            </label>
+
+                            <textarea
+                                id="recipients"
+                                class="recipient-input"
+                                placeholder="john@example.com&#10;jane@example.com&#10;alex@example.com"
+                            ></textarea>
+
+                        </div>
+
+
+                        <div class="recipient-toolbar">
+
+                            <div class="recipient-stats">
+
+                                <div class="recipient-stat valid">
+                                    ✓
+                                    <strong id="validCount">0</strong>
+                                    valid
+                                </div>
+
+                                <div class="recipient-stat invalid">
+                                    !
+                                    <strong id="invalidCount">0</strong>
+                                    invalid
+                                </div>
+
+                                <div class="recipient-stat">
+                                    #
+                                    <strong id="uniqueCount">0</strong>
+                                    unique
+                                </div>
+
+                            </div>
+
+
+                            <button
+                                class="clear-recipients"
+                                onclick="clearRecipients()"
+                            >
+                                Clear list
+                            </button>
+
+                        </div>
+
+
+                        <div
+                            id="invalidList"
+                            class="invalid-list"
+                        >
+
+                            <div class="invalid-list-title">
+                                Invalid addresses
+                            </div>
+
+                            <div
+                                id="invalidEmails"
+                                class="invalid-emails"
+                            ></div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- MESSAGE -->
+
+                <section class="builder-card">
+
+                    <div class="card-header">
+
+                        <h2>
+                            Email message
+                        </h2>
+
+                        <p>
+                            Write your message and personalize it for
+                            every recipient.
+                        </p>
+
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="editor-toolbar">
+
+                            <button
+                                class="editor-tool"
+                                onclick="formatText('bold')"
+                                title="Bold"
+                            >
+                                B
+                            </button>
+
+                            <button
+                                class="editor-tool"
+                                onclick="formatText('italic')"
+                                title="Italic"
+                            >
+                                I
+                            </button>
+
+                            <button
+                                class="editor-tool"
+                                onclick="formatText('underline')"
+                                title="Underline"
+                            >
+                                U
+                            </button>
+
+                            <div class="editor-divider"></div>
+
+                            <button
+                                class="editor-tool"
+                                onclick="formatText('insertUnorderedList')"
+                                title="Bullet list"
+                            >
+                                •
+                            </button>
+
+                            <button
+                                class="editor-tool"
+                                onclick="formatText('insertOrderedList')"
+                                title="Numbered list"
+                            >
+                                1.
+                            </button>
+
+                            <div class="editor-divider"></div>
+
+                            <button
+                                class="editor-tool"
+                                onclick="insertLink()"
+                                title="Insert link"
+                            >
+                                ↗
+                            </button>
+
+                            <button
+                                class="editor-tool"
+                                onclick="clearFormatting()"
+                                title="Clear formatting"
+                            >
+                                Tx
+                            </button>
+
+                        </div>
+
+
+                        <div
+                            id="editor"
+                            class="editor-area"
+                            contenteditable="true"
+                            data-placeholder="Write your email here..."
+                        ></div>
+
+
+                        <div class="personalization-row">
+
+                            <span class="personalization-label">
+                                Personalize:
+                            </span>
+
+                            <button
+                                class="variable-chip"
+                                onclick="insertVariable('{{first_name}}')"
+                            >
+                                {{first_name}}
+                            </button>
+
+                            <button
+                                class="variable-chip"
+                                onclick="insertVariable('{{email}}')"
+                            >
+                                {{email}}
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- RECIPIENT ACTIVITY -->
+<section class="builder-card recipient-activity-card" id="recipientActivityCard">
+
+    <div class="card-header recipient-activity-header">
+        <div>
+            <div class="recipient-title-row">
+                <div class="recipient-title-icon">◉</div>
+                <h2>Recipient Activity</h2>
+            </div>
+
+            <p>
+                Track engagement for every individual recipient.
+            </p>
+        </div>
+
+        <div class="live-tracking-badge">
+            <span class="live-dot"></span>
+            LIVE TRACKING
+        </div>
+    </div>
+
+    <div class="recipient-table-wrapper">
+
+        <table class="recipient-table">
+
+            <thead>
+                <tr>
+                    <th>RECIPIENT</th>
+                    <th>STATUS</th>
+                    <th>OPENS</th>
+                    <th>CLICKS</th>
+                    <th>CONFIRMED SEEN</th>
+                </tr>
+            </thead>
+
+            <tbody id="recipientActivityBody">
+
+                <tr class="recipient-empty-row">
+                    <td colspan="5">
+
+                        <div class="recipient-empty-state">
+
+                            <div class="recipient-empty-icon">
+                                ◉
+                            </div>
+
+                            <div>
+                                <strong>No recipient activity yet</strong>
+
+                                <p>
+                                    Engagement data will appear here once recipients interact with your email.
+                                </p>
+                            </div>
+
+                        </div>
+
+                    </td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section> 
+                
+                <!-- TRACKING -->
+
+                <section class="builder-card">
+
+                    <div class="card-header">
+
+                        <h2>
+                            Engagement tracking
+                        </h2>
+
+                        <p>
+                            Choose which recipient interactions
+                            PixelTrail should measure.
+                        </p>
+
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="tracking-list">
+
+                            <div class="tracking-option">
+
+                                <div class="tracking-info">
+
+                                    <div class="tracking-icon">
+                                        ◉
+                                    </div>
+
+                                    <div>
+
+                                        <div class="tracking-title">
+                                            Open tracking
+                                        </div>
+
+                                        <div class="tracking-description">
+                                            Detect when the email content is requested.
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <label class="toggle">
+
+                                    <input
+                                        type="checkbox"
+                                        id="openTracking"
+                                        checked
+                                    >
+
+                                    <span class="toggle-slider"></span>
+
+                                </label>
+
+                            </div>
+
+
+                            <div class="tracking-option">
+
+                                <div class="tracking-info">
+
+                                    <div class="tracking-icon">
+                                        ↗
+                                    </div>
+
+                                    <div>
+
+                                        <div class="tracking-title">
+                                            Click tracking
+                                        </div>
+
+                                        <div class="tracking-description">
+                                            Track clicks on links inside the email.
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <label class="toggle">
+
+                                    <input
+                                        type="checkbox"
+                                        id="clickTracking"
+                                        checked
+                                    >
+
+                                    <span class="toggle-slider"></span>
+
+                                </label>
+
+                            </div>
+
+
+                            <div class="tracking-option">
+
+                                <div class="tracking-info">
+
+                                    <div class="tracking-icon">
+                                        ✓
+                                    </div>
+
+                                    <div>
+
+                                        <div class="tracking-title">
+                                            Confirm Seen
+                                        </div>
+
+                                        <div class="tracking-description">
+                                            Let recipients explicitly confirm they saw the message.
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <label class="toggle">
+
+                                    <input
+                                        type="checkbox"
+                                        id="seenTracking"
+                                        checked
+                                    >
+
+                                    <span class="toggle-slider"></span>
+
+                                </label>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+
+            <!-- =====================================
+                 RIGHT
+            ====================================== -->
+
+            <aside class="builder-right">
+
+                <!-- PREVIEW -->
+
+                <section class="builder-card preview-card">
+
+                    <div class="preview-header">
+
+                        <h3>
+                            Live preview
+                        </h3>
+
+                        <span class="preview-label">
+                            Recipient view
+                        </span>
+
+                    </div>
+
+
+                    <div class="email-preview">
+
+                        <div class="email-preview-top">
+
+                            <div class="preview-from">
+                                From: PixelTrail
+                            </div>
+
+                            <div
+                                id="previewSubject"
+                                class="preview-subject"
+                            >
+                                Your email subject
+                            </div>
+
+                            <div
+                                id="previewRecipient"
+                                class="preview-recipient"
+                            >
+                                To: recipient@example.com
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            id="previewBody"
+                            class="email-preview-body"
+                        >
+                            <span style="color:#999;">
+                                Your email preview will appear here.
+                            </span>
+                        </div>
+
+
+                        <div class="preview-footer">
+
+                            PixelTrail tracking is enabled for this
+                            message.
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- SUMMARY -->
+
+                <section class="builder-card">
+
+                    <div class="card-header">
+
+                        <h2>
+                            Campaign summary
+                        </h2>
+
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="summary-list">
+
+                            <div class="summary-row">
+
+                                <span class="summary-label">
+                                    Recipients
+                                </span>
+
+                                <span
+                                    id="summaryRecipients"
+                                    class="summary-value"
+                                >
+                                    0
+                                </span>
+
+                            </div>
+
+
+                            <div class="summary-row">
+
+                                <span class="summary-label">
+                                    Subject
+                                </span>
+
+                                <span
+                                    id="summarySubject"
+                                    class="summary-value"
+                                >
+                                    Not set
+                                </span>
+
+                            </div>
+
+
+                            <div class="summary-row">
+
+                                <span class="summary-label">
+                                    Open tracking
+                                </span>
+
+                                <span
+                                    id="summaryOpen"
+                                    class="summary-value success"
+                                >
+                                    Enabled
+                                </span>
+
+                            </div>
+
+
+                            <div class="summary-row">
+
+                                <span class="summary-label">
+                                    Click tracking
+                                </span>
+
+                                <span
+                                    id="summaryClick"
+                                    class="summary-value success"
+                                >
+                                    Enabled
+                                </span>
+
+                            </div>
+
+
+                            <div class="summary-row">
+
+                                <span class="summary-label">
+                                    Confirm Seen
+                                </span>
+
+                                <span
+                                    id="summarySeen"
+                                    class="summary-value success"
+                                >
+                                    Enabled
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- TIP -->
+
+                <section class="builder-card">
+
+                    <div class="card-body">
+
+                        <div
+                            style="
+                                display:flex;
+                                gap:11px;
+                                align-items:flex-start;
+                            "
+                        >
+
+                            <div
+                                style="
+                                    width:31px;
+                                    height:31px;
+                                    border-radius:9px;
+                                    display:grid;
+                                    place-items:center;
+                                    background:rgba(94,231,223,0.07);
+                                    color:#5ee7df;
+                                    flex-shrink:0;
+                                "
+                            >
+                                ✦
+                            </div>
+
+                            <div>
+
+                                <div
+                                    style="
+                                        color:var(--text);
+                                        font-size:11px;
+                                        font-weight:650;
+                                        margin-bottom:4px;
+                                    "
+                                >
+                                    Personalization tip
+                                </div>
+
+                                <div
+                                    style="
+                                        color:var(--muted);
+                                        font-size:9px;
+                                        line-height:1.6;
+                                    "
+                                >
+                                    Use
+                                    <strong style="color:#b9aaff;">
+                                        {{first_name}}
+                                    </strong>
+                                    to automatically personalize each
+                                    recipient's message.
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </aside>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+<!-- =========================================
+     SEND CONFIRMATION MODAL
+========================================== -->
+
+<div
+    id="sendModal"
+    class="send-modal"
+>
+
+    <div class="modal-card">
+
+        <div class="modal-icon">
+            ↗
+        </div>
+
+        <h2>
+            Ready to send?
+        </h2>
+
+        <p>
+            Review the details below before sending. Once a campaign
+            is sent, it cannot be edited.
+        </p>
+
+
+        <div class="modal-summary">
+
+            <div class="modal-summary-row">
+
+                <span>
+                    Campaign
+                </span>
+
+                <span id="modalCampaign">
+                    —
+                </span>
+
+            </div>
+
+
+            <div class="modal-summary-row">
+
+                <span>
+                    Recipients
+                </span>
+
+                <span id="modalRecipients">
+                    0
+                </span>
+
+            </div>
+
+
+            <div class="modal-summary-row">
+
+                <span>
+                    Subject
+                </span>
+
+                <span id="modalSubject">
+                    —
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="modal-actions">
+
+            <button
+                class="btn btn-secondary"
+                onclick="closeSendModal()"
+            >
+                Cancel
+            </button>
+
+            <button
+                class="btn btn-primary"
+                id="confirmSendButton"
+                onclick="sendCampaign()"
+            >
+                Send Campaign
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- TOAST -->
+
+<div
+    id="toast"
+    class="toast"
+></div>
+
+
+<script>
+
+    const API_URL = "https://pixeltrail.onrender.com";
+
+    const token =
+        localStorage.getItem("pixeltrail_token");
+
+    const urlParams =
+        new URLSearchParams(window.location.search);
+
+    const editingCampaignId =
+        urlParams.get("id");
+
+
+    let currentCampaignId =
+        editingCampaignId
+            ? Number(editingCampaignId)
+            : null;
+
+
+    let currentRecipients = [];
+    let invalidRecipients = [];
+
+
+    // =========================================
+    // AUTH
+    // =========================================
+
+    if (!token) {
+        window.location.href = "login.html";
+    }
+
+
+    // =========================================
+    // API HELPER
+    // =========================================
+
+    async function apiRequest(
+        endpoint,
+        options = {}
+    ) {
+
+        const headers = {
+            "Content-Type": "application/json",
+            ...(options.headers || {})
+        };
+
+        headers["Authorization"] =
+            `Bearer ${token}`;
+
+
+        const response =
+            await fetch(
+                `${API_URL}${endpoint}`,
+                {
+                    ...options,
+                    headers
+                }
+            );
+
+
+        if (response.status === 401) {
+
+            localStorage.removeItem(
+                "pixeltrail_token"
+            );
+
+            localStorage.removeItem(
+                "pixeltrail_user_email"
+            );
+
+            window.location.href =
+                "login.html";
+
+            return null;
+        }
+
+
+        let data = null;
+
+        try {
+            data = await response.json();
+        } catch {
+            data = null;
+        }
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data?.detail ||
+                "Request failed."
+            );
+
+        }
+
+
+        return data;
+
+    }
+
+
+    // =========================================
+    // LOAD EXISTING CAMPAIGN
+    // =========================================
+
+    async function loadExistingCampaign() {
+
+    if (!currentCampaignId) {
+        return;
+    }
+
+    try {
+
+        document.getElementById(
+            "pageTitle"
+        ).textContent = "Campaign Details";
+
+
+        // ========================================
+        // LOAD CAMPAIGN
+        // ========================================
+
+        const campaign =
+            await apiRequest(
+                `/campaigns/${currentCampaignId}`
+            );
+
+        if (!campaign) {
+            return;
+        }
+
+
+        // ========================================
+        // LOAD CAMPAIGN DETAILS
+        // ========================================
+
+        document.getElementById(
+            "campaignName"
+        ).value =
+            campaign.name || "";
+
+
+        document.getElementById(
+            "subject"
+        ).value =
+            campaign.subject || "";
+
+
+        // ========================================
+        // LOAD EMAIL BODY
+        // ========================================
+
+        document.getElementById(
+            "editor"
+        ).innerHTML =
+            campaign.body || "";
+
+
+        // ========================================
+        // LOAD RECIPIENT RECORDS
+        // ========================================
+
+        const emailsResponse =
+            await apiRequest(
+                `/campaigns/${currentCampaignId}/emails`
+            );
+
+
+        const emails =
+            Array.isArray(emailsResponse)
+                ? emailsResponse
+                : (
+                    Array.isArray(
+                        emailsResponse?.emails
+                    )
+                        ? emailsResponse.emails
+                        : []
+                );
+
+
+        // ========================================
+        // LOAD RECIPIENT EMAILS
+        // ========================================
+
+        if (emails.length) {
+
+            document.getElementById(
+                "recipients"
+            ).value =
+                emails
+                    .map(
+                        email =>
+                            email.recipient
+                    )
+                    .join("\n");
+
+            parseRecipients();
+        }
+
+        await refreshRecipientActivity();
+
+        function renderRecipientActivity(emails) {
+    const container = document.getElementById("recipientActivityBody");
+
+    if (!container) {
+        return;
+    }
+
+    if (!Array.isArray(emails) || emails.length === 0) {
+        container.innerHTML = `
+            <tr class="recipient-empty-row">
+                <td colspan="5">
+                    <div class="recipient-empty-state">
+                        <div class="recipient-empty-icon">
+                            ◉
+                        </div>
+
+                        <div>
+                            <strong>No recipient activity yet</strong>
+
+                            <p>
+                                Engagement data will appear here once recipients interact with your email.
+                            </p>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = emails.map(email => {
+
+        const recipient = email.recipient || "Unknown recipient";
+
+        const initial = recipient
+            .charAt(0)
+            .toUpperCase();
+
+        const status = email.status || "sent";
+
+        const opens = Number(email.open_count || 0);
+
+        const clicks = Number(email.click_count || 0);
+
+        const confirmed = Boolean(email.confirmed_seen_at);
+
+        return `
+            <tr>
+
+                <td>
+                    <div class="recipient-person">
+
+                        <div class="recipient-avatar">
+                            ${initial}
+                        </div>
+
+                        <div class="recipient-email">
+                            ${recipient}
+                        </div>
+
+                    </div>
+                </td>
+
+                <td>
+                    <span class="recipient-status">
+                        <span class="recipient-status-dot"></span>
+                        ${status}
+                    </span>
+                </td>
+
+                <td style="text-align:center;">
+                    <span class="recipient-metric">
+                        ${opens}
+                    </span>
+                </td>
+
+                <td style="text-align:center;">
+                    <span class="recipient-metric">
+                        ${clicks}
+                    </span>
+                </td>
+
+                <td style="text-align:center;">
+
+                    ${
+                        confirmed
+                            ? `
+                                <span class="recipient-confirmed">
+                                    <span class="recipient-confirmed-icon">✓</span>
+                                    Confirmed
+                                </span>
+                              `
+                            : `
+                                <span style="
+                                    color:var(--muted);
+                                    font-size:11px;
+                                ">
+                                    Not confirmed
+                                </span>
+                              `
+                    }
+
+                </td>
+
+            </tr>
+        `;
+
+    }).join("");
+}
+
+async function refreshRecipientActivity() {
+    if (!currentCampaignId) {
+        return;
+    }
+
+    try {
+        const response = await apiRequest(
+            `/campaigns/${currentCampaignId}/emails`
+        );
+
+        const latestEmails = Array.isArray(response)
+            ? response
+            : (
+                Array.isArray(response?.emails)
+                    ? response.emails
+                    : []
+            );
+
+        renderRecipientActivity(latestEmails);
+
+    } catch (error) {
+        console.error(
+            "PixelTrail tracking refresh failed:",
+            error
+        );
+    }
+}
+
+if (!window.pixeltrailTrackingTimer) {
+    window.pixeltrailTrackingTimer = setInterval(
+        refreshRecipientActivity,
+        5000
+    );
+}
+
+
+        // ========================================
+        // UPDATE PREVIEW
+        // ========================================
+
+        updatePreview();
+
+
+    } catch (error) {
+
+        console.warn(
+            "Existing campaign could not be loaded:",
+            error
+        );
+
+    }
+}
+
+
+    // =========================================
+    // RECIPIENT PARSER
+    // =========================================
+
+    function parseRecipients() {
+
+        const raw =
+            document.getElementById(
+                "recipients"
+            ).value;
+
+
+        if (!raw.trim()) {
+
+            currentRecipients = [];
+            invalidRecipients = [];
+
+            updateRecipientStats();
+
+            return;
+
+        }
+
+
+        /*
+         * Accept:
+         * - newline
+         * - comma
+         * - semicolon
+         */
+
+        const entries =
+            raw
+                .split(/[\n,;]+/)
+                .map(item => item.trim().toLowerCase())
+                .filter(Boolean);
+
+
+        const unique =
+            [...new Set(entries)];
+
+
+        currentRecipients = unique.filter(
+            isValidEmail
+        );
+
+
+        invalidRecipients = unique.filter(
+            email => !isValidEmail(email)
+        );
+
+
+        updateRecipientStats();
+
+        updatePreview();
+
+    }
+
+
+    function isValidEmail(email) {
+
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            .test(email);
+
+    }
+
+
+    function updateRecipientStats() {
+
+        document.getElementById(
+            "validCount"
+        ).textContent =
+            currentRecipients.length;
+
+
+        document.getElementById(
+            "invalidCount"
+        ).textContent =
+            invalidRecipients.length;
+
+
+        document.getElementById(
+            "uniqueCount"
+        ).textContent =
+            currentRecipients.length +
+            invalidRecipients.length;
+
+
+        document.getElementById(
+            "summaryRecipients"
+        ).textContent =
+            currentRecipients.length;
+
+
+        const invalidList =
+            document.getElementById(
+                "invalidList"
+            );
+
+
+        const invalidEmails =
+            document.getElementById(
+                "invalidEmails"
+            );
+
+
+        if (invalidRecipients.length) {
+
+            invalidList.classList.add("show");
+
+            invalidEmails.textContent =
+                invalidRecipients.join(", ");
+
+        } else {
+
+            invalidList.classList.remove("show");
+
+            invalidEmails.textContent = "";
+
+        }
+
+    }
+
+
+    function clearRecipients() {
+
+        document.getElementById(
+            "recipients"
+        ).value = "";
+
+        currentRecipients = [];
+        invalidRecipients = [];
+
+        updateRecipientStats();
+        updatePreview();
+
+    }
+
+
+    document.getElementById(
+        "recipients"
+    ).addEventListener(
+        "input",
+        parseRecipients
+    );
+
+
+    // =========================================
+    // EDITOR
+    // =========================================
+
+    function formatText(command) {
+
+        document.execCommand(
+            command,
+            false,
+            null
+        );
+
+        document.getElementById(
+            "editor"
+        ).focus();
+
+        updatePreview();
+
+    }
+
+
+    function insertLink() {
+
+        const url =
+            prompt(
+                "Enter the URL:",
+                "https://"
+            );
+
+
+        if (!url) {
+            return;
+        }
+
+
+        document.execCommand(
+            "createLink",
+            false,
+            url
+        );
+
+        document.getElementById(
+            "editor"
+        ).focus();
+
+        updatePreview();
+
+    }
+
+
+    function clearFormatting() {
+
+        document.execCommand(
+            "removeFormat",
+            false,
+            null
+        );
+
+        document.getElementById(
+            "editor"
+        ).focus();
+
+        updatePreview();
+
+    }
+
+
+    function insertVariable(variable) {
+
+        const editor =
+            document.getElementById(
+                "editor"
+            );
+
+
+        editor.focus();
+
+
+        document.execCommand(
+            "insertText",
+            false,
+            variable
+        );
+
+
+        updatePreview();
+
+    }
+
+
+    document.getElementById(
+        "editor"
+    ).addEventListener(
+        "input",
+        updatePreview
+    );
+
+
+    // =========================================
+    // LIVE PREVIEW
+    // =========================================
+
+    document.getElementById(
+        "subject"
+    ).addEventListener(
+        "input",
+        updatePreview
+    );
+
+
+    document.getElementById(
+        "campaignName"
+    ).addEventListener(
+        "input",
+        updatePreview
+    );
+
+
+    function updatePreview() {
+
+        const subject =
+            document.getElementById(
+                "subject"
+            ).value.trim();
+
+
+        const body =
+            document.getElementById(
+                "editor"
+            ).innerHTML.trim();
+
+
+        document.getElementById(
+            "previewSubject"
+        ).textContent =
+            subject ||
+            "Your email subject";
+
+
+        document.getElementById(
+            "previewRecipient"
+        ).textContent =
+            currentRecipients.length
+                ? `To: ${currentRecipients[0]}`
+                : "To: recipient@example.com";
+
+
+        const preview =
+            document.getElementById(
+                "previewBody"
+            );
+
+
+        if (!body) {
+
+            preview.innerHTML =
+                `<span style="color:#999;">
+                    Your email preview will appear here.
+                </span>`;
+
+        } else {
+
+            preview.innerHTML =
+                body;
+
+        }
+
+
+        document.getElementById(
+            "summarySubject"
+        ).textContent =
+            subject || "Not set";
+
+
+        updateTrackingSummary();
+
+    }
+
+
+    // =========================================
+    // TRACKING SUMMARY
+    // =========================================
+
+    document.getElementById(
+        "openTracking"
+    ).addEventListener(
+        "change",
+        updateTrackingSummary
+    );
+
+
+    document.getElementById(
+        "clickTracking"
+    ).addEventListener(
+        "change",
+        updateTrackingSummary
+    );
+
+
+    document.getElementById(
+        "seenTracking"
+    ).addEventListener(
+        "change",
+        updateTrackingSummary
+    );
+
+
+    function updateTrackingSummary() {
+
+        updateToggleSummary(
+            "openTracking",
+            "summaryOpen"
+        );
+
+        updateToggleSummary(
+            "clickTracking",
+            "summaryClick"
+        );
+
+        updateToggleSummary(
+            "seenTracking",
+            "summarySeen"
+        );
+
+    }
+
+
+    function updateToggleSummary(
+        checkboxId,
+        summaryId
+    ) {
+
+        const checkbox =
+            document.getElementById(
+                checkboxId
+            );
+
+
+        const element =
+            document.getElementById(
+                summaryId
+            );
+
+
+        if (checkbox.checked) {
+
+            element.textContent =
+                "Enabled";
+
+            element.classList.add(
+                "success"
+            );
+
+        } else {
+
+            element.textContent =
+                "Disabled";
+
+            element.classList.remove(
+                "success"
+            );
+
+        }
+
+    }
+
+
+    // =========================================
+    // VALIDATION
+    // =========================================
+
+    function validateCampaign() {
+
+        const name =
+            document.getElementById(
+                "campaignName"
+            ).value.trim();
+
+
+        const subject =
+            document.getElementById(
+                "subject"
+            ).value.trim();
+
+
+        const editor =
+            document.getElementById(
+                "editor"
+            );
+
+
+        const body =
+            editor.innerHTML.trim();
+
+
+        if (!name) {
+
+            showAlert(
+                "Please enter a campaign name."
+            );
+
+            return false;
+
+        }
+
+
+        if (!subject) {
+
+            showAlert(
+                "Please enter an email subject."
+            );
+
+            return false;
+
+        }
+
+
+        if (!currentRecipients.length) {
+
+            showAlert(
+                "Please add at least one valid recipient."
+            );
+
+            return false;
+
+        }
+
+
+        if (invalidRecipients.length) {
+
+            showAlert(
+                "Please remove or correct the invalid email addresses before continuing."
+            );
+
+            return false;
+
+        }
+
+
+        if (!body) {
+
+            showAlert(
+                "Please write an email message."
+            );
+
+            return false;
+
+        }
+
+
+        hideAlert();
+
+        return true;
+
+    }
+
+
+    // =========================================
+    // SAVE CAMPAIGN
+    // =========================================
+
+    async function saveCampaign() {
+
+        if (!validateCampaign()) {
+            return;
+        }
+
+
+        const button =
+            document.getElementById(
+                "saveButton"
+            );
+
+
+        button.disabled = true;
+        button.textContent = "Saving...";
+
+
+        try {
+
+            const campaignData = {
+
+                name:
+                    document.getElementById(
+                        "campaignName"
+                    ).value.trim(),
+
+                subject:
+                    document.getElementById(
+                        "subject"
+                    ).value.trim(),
+
+                body:
+                    document.getElementById(
+                        "editor"
+                    ).innerHTML
+
+            };
+
+
+            if (!currentCampaignId) {
+
+                const campaign =
+    await apiRequest(
+        "/campaigns",
+        {
+            method: "POST",
+            body: JSON.stringify(
+                campaignData
+            )
+        }
+    );
+
+console.log(
+    "PixelTrail campaign response:",
+    campaign
+);
+
+currentCampaignId =
+    campaign?.campaign_id ??
+    campaign?.id ??
+    null;
+
+console.log(
+    "PixelTrail currentCampaignId:",
+    currentCampaignId
+);
+
+if (!currentCampaignId) {
+    throw new Error(
+        "Campaign was created but no campaign ID was returned."
+    );
+}
+
+
+            } else {
+
+                /*
+                 * The current backend does not yet
+                 * expose a campaign update endpoint.
+                 *
+                 * Recipient/message updates are
+                 * handled through the builder flow.
+                 */
+
+            }
+
+
+            await addRecipientsToCampaign();
+
+
+            showToast(
+                "Campaign saved successfully."
+            );
+
+
+        } catch (error) {
+
+            console.error(error);
+
+            showAlert(
+                error.message
+            );
+
+        } finally {
+
+            button.disabled = false;
+            button.textContent = "Save Draft";
+
+        }
+
+    }
+
+
+    // =========================================
+    // CREATE RECIPIENT RECORDS
+    // =========================================
+
+    async function addRecipientsToCampaign() {
+
+        if (!currentCampaignId) {
+            console.error("PixelTrail: currentCampaignId is missing.");
+            throw new Error("Campaign ID was not created.");
+        }
+
+
+        if (!currentRecipients.length) {
+            console.error("PixelTrail: currentRecipients is empty.");
+            throw new Error("No valid recipients found.");
+        }
+
+
+        await apiRequest(
+            `/campaigns/${currentCampaignId}/recipients`,
+            {
+                method: "POST",
+
+                body: JSON.stringify({
+                    recipients:
+                        currentRecipients.join("\n")
+                })
+            }
+        );
+
+    }
+
+
+    // =========================================
+    // SEND MODAL
+    // =========================================
+
+    function openSendModal() {
+
+        if (!validateCampaign()) {
+            return;
+        }
+
+
+        document.getElementById(
+            "modalCampaign"
+        ).textContent =
+            document.getElementById(
+                "campaignName"
+            ).value.trim();
+
+
+        document.getElementById(
+            "modalRecipients"
+        ).textContent =
+            currentRecipients.length;
+
+
+        document.getElementById(
+            "modalSubject"
+        ).textContent =
+            document.getElementById(
+                "subject"
+            ).value.trim();
+
+
+        document.getElementById(
+            "sendModal"
+        ).classList.add("show");
+
+    }
+
+
+    function closeSendModal() {
+
+        document.getElementById(
+            "sendModal"
+        ).classList.remove("show");
+
+    }
+
+
+    // =========================================
+    // SEND CAMPAIGN
+    // =========================================
+
+    async function sendCampaign() {
+
+        const button =
+            document.getElementById(
+                "confirmSendButton"
+            );
+
+
+        button.disabled = true;
+        button.textContent = "Preparing...";
+
+
+        try {
+
+            /*
+             * Create campaign first if this is
+             * a brand-new campaign.
+             */
+
+            if (!currentCampaignId) {
+
+                const campaign =
+                    await apiRequest(
+                        "/campaigns",
+                        {
+                            method: "POST",
+
+                            body: JSON.stringify({
+
+                                name:
+                                    document.getElementById(
+                                        "campaignName"
+                                    ).value.trim(),
+
+                                subject:
+                                    document.getElementById(
+                                        "subject"
+                                    ).value.trim(),
+
+                                body:
+                                    document.getElementById(
+                                        "editor"
+                                    ).innerHTML
+
+                            })
+                        }
+                    );
+                
+
+        console.log(
+            "PixelTrail campaign response:",
+            campaign
+        );
+
+        currentCampaignId =
+            campaign?.id ??
+            campaign?.campaign_id ??
+            campaign?.campaign?.id ??
+            campaign?.campaign?.campaign_id ??
+            null;
+
+                currentCampaignId =
+                    campaign?.id ??
+                    campaign?.campaign_id ??
+                    campaign?.campaign?.id ??
+                    campaign?.campaign?.campaign_id ??
+                    null;
+
+                if (!currentCampaignId) {
+                    throw new Error(
+                        "Campaign was created but no campaign ID was returned."
+                    );
+}
+
+            }
+
+
+            button.textContent =
+                "Adding recipients...";
+
+
+            await addRecipientsToCampaign();
+
+
+            button.textContent =
+                "Sending...";
+
+
+            const result =
+                await apiRequest(
+                    `/campaigns/${currentCampaignId}/send`,
+                    {
+                        method: "POST"
+                    }
+                );
+
+
+            closeSendModal();
+
+
+            showToast(
+                `Campaign sent. ${result?.sent ?? currentRecipients.length} email(s) processed.`
+            );
+
+
+            document.getElementById(
+                "sendButton"
+            ).disabled = true;
+
+
+            document.getElementById(
+                "saveButton"
+            ).disabled = true;
+
+
+            setTimeout(() => {
+
+                window.location.href =
+                    "dashboard.html";
+
+            }, 1800);
+
+
+        } catch (error) {
+
+            console.error(error);
+
+            closeSendModal();
+
+            showAlert(
+                error.message
+            );
+
+        } finally {
+
+            button.disabled = false;
+            button.textContent = "Send Campaign";
+
+        }
+
+    }
+
+
+    // =========================================
+    // ALERT
+    // =========================================
+
+    function showAlert(message) {
+
+        const alert =
+            document.getElementById(
+                "builderAlert"
+            );
+
+
+        alert.textContent =
+            message;
+
+
+        alert.classList.add(
+            "show"
+        );
+
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+
+    }
+
+
+    function hideAlert() {
+
+        document.getElementById(
+            "builderAlert"
+        ).classList.remove(
+            "show"
+        );
+
+    }
+
+
+    // =========================================
+    // TOAST
+    // =========================================
+
+    let toastTimer;
+
+    function showToast(message) {
+
+        const toast =
+            document.getElementById(
+                "toast"
+            );
+
+
+        toast.textContent =
+            message;
+
+
+        toast.classList.add(
+            "show"
+        );
+
+
+        clearTimeout(
+            toastTimer
+        );
+
+
+        toastTimer =
+            setTimeout(() => {
+
+                toast.classList.remove(
+                    "show"
+                );
+
+            }, 3500);
+
+    }
+
+
+    // =========================================
+    // NAVIGATION
+    // =========================================
+
+    function goBack() {
+
+        window.location.href =
+            "dashboard.html";
+
+    }
+
+
+    // =========================================
+    // ESCAPE KEY
+    // =========================================
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Escape"
+            ) {
+
+                closeSendModal();
+
+            }
+
+        }
+    );
+
+
+    // =========================================
+    // INITIALIZE
+    // =========================================
+
+    parseRecipients();
+    updatePreview();
+    loadExistingCampaign();
+
+    
+    
+
+</script>
+
+</body>
+</html>
