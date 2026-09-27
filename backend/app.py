@@ -155,12 +155,12 @@ def build_tracked_email_html(
     confirm_seen=True
 ):
     tracking_pixel_url = (
-        f"https://https://pixeltrail-1.onrender.com/"
+        f"https://pixeltrail-1.onrender.com/"
         f"track/{tracking_id}.png"
     )
 
     confirm_seen_url = (
-        f"https://https://pixeltrail-1.onrender.com/"
+        f"https://pixeltrail-1.onrender.com/"
         f"track/confirm/{tracking_id}"
     )
 
@@ -169,7 +169,7 @@ def build_tracked_email_html(
         original_url = match.group(1)
 
         tracked_url = (
-            f"https://https://pixeltrail-1.onrender.com/"
+            f"https://pixeltrail-1.onrender.com/"
             f"track/click/{tracking_id}"
             f"?url={quote(original_url, safe='')}"
         )
@@ -182,7 +182,7 @@ def build_tracked_email_html(
 
         if click_tracking:
             tracked_url = (
-                f"https://https://pixeltrail-1.onrender.com/"
+                f"https://pixeltrail-1.onrender.com/"
                 f"track/click/{tracking_id}"
                 f"?url={quote(original_url, safe='')}"
             )
