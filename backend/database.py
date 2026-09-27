@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from pathlib import Path
+from datetime import datetime, timezone
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -49,6 +50,27 @@ def initialize_database():
                 email TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
                 created_at TEXT NOT NULL
+            )
+            """
+        )
+
+                # -----------------------------
+        # Senders
+        # -----------------------------
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS senders (
+                id BIGSERIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL,
+                brevo_sender_id BIGINT,
+                verified BOOLEAN NOT NULL DEFAULT FALSE,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (user_id)
+                    REFERENCES users(id)
+                    ON DELETE CASCADE,
+                UNIQUE (user_id, email)
             )
             """
         )
@@ -123,9 +145,48 @@ def initialize_database():
 )
 
 
-        # ------------------------------
+            # -----------------------------
+        # Upgrade existing campaigns table
+        # -----------------------------
+        cursor.execute(
+            """
+            ALTER TABLE campaigns
+            ADD COLUMN IF NOT EXISTS sender_id BIGINT
+            REFERENCES senders(id)
+            ON DELETE SET NULL
+            """
+        )
+
+
+        # ---------------------------
+        # Campaign tracking settings
+        # ---------------------------
+
+        cursor.execute(
+            """
+            ALTER TABLE campaigns
+            ADD COLUMN IF NOT EXISTS open_tracking BOOLEAN NOT NULL DEFAULT TRUE
+            """
+        )
+
+        cursor.execute(
+            """
+            ALTER TABLE campaigns
+            ADD COLUMN IF NOT EXISTS click_tracking BOOLEAN NOT NULL DEFAULT TRUE
+            """
+        )
+
+        cursor.execute(
+            """
+            ALTER TABLE campaigns
+            ADD COLUMN IF NOT EXISTS confirm_seen BOOLEAN NOT NULL DEFAULT TRUE
+            """
+        )
+
+
+        # -----------------------------
         # Indexes
-        # ------------------------------
+        # -----------------------------
         cursor.execute(
             """
             CREATE INDEX IF NOT EXISTS idx_campaigns_user_id
@@ -176,6 +237,27 @@ def initialize_database():
         """
     )
 
+        # -----------------------------
+    # Senders
+    # -----------------------------
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS senders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            brevo_sender_id INTEGER,
+            verified INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (user_id)
+                REFERENCES users(id)
+                ON DELETE CASCADE,
+            UNIQUE (user_id, email)
+        )
+        """
+    )
+
     # ------------------------------
     # Campaigns
     # ------------------------------
@@ -195,6 +277,54 @@ def initialize_database():
         )
         """
     )
+
+        # -----------------------------
+    # Upgrade existing campaigns table
+    # -----------------------------
+    campaign_columns = {
+        row["name"]
+        for row in connection.execute(
+            "PRAGMA table_info(campaigns)"
+        ).fetchall()
+    }
+
+    if "sender_id" not in campaign_columns:
+        connection.execute(
+            """
+            ALTER TABLE campaigns
+            ADD COLUMN sender_id INTEGER
+            REFERENCES senders(id)
+            ON DELETE SET NULL
+            """
+        )
+
+    # ---------------------------
+    # Campaign tracking settings
+    # ---------------------------
+
+    if "open_tracking" not in campaign_columns:
+        connection.execute(
+            """
+            ALTER TABLE campaigns
+            ADD COLUMN open_tracking INTEGER NOT NULL DEFAULT 1
+            """
+        )
+
+    if "click_tracking" not in campaign_columns:
+        connection.execute(
+            """
+            ALTER TABLE campaigns
+            ADD COLUMN click_tracking INTEGER NOT NULL DEFAULT 1
+            """
+        )
+
+    if "confirm_seen" not in campaign_columns:
+        connection.execute(
+            """
+            ALTER TABLE campaigns
+            ADD COLUMN confirm_seen INTEGER NOT NULL DEFAULT 1
+            """
+        )        
 
     # ------------------------------
     # Existing emails table
@@ -288,6 +418,27 @@ def initialize_database():
             ADD COLUMN confirmed_seen_at TEXT
             """
         )
+
+        # -----------------------------
+    # Upgrade existing campaigns table
+    # -----------------------------
+
+    campaign_columns = {
+        row["name"]
+        for row in connection.execute(
+            "PRAGMA table_info(campaigns)"
+        ).fetchall()
+    }
+
+    if "sender_id" not in campaign_columns:
+        connection.execute(
+            """
+            ALTER TABLE campaigns
+            ADD COLUMN sender_id INTEGER
+            REFERENCES senders(id)
+            ON DELETE SET NULL
+            """
+        )        
 
     # ------------------------------
     # Indexes
@@ -689,6 +840,213 @@ def get_user_by_id(user_id):
     return user
 
 
+# ============================================================
+# SENDER FUNCTIONS
+# ============================================================
+
+def create_sender(user_id, name, email, brevo_sender_id=None, verified=False):
+    connection = get_connection()
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO senders (
+                user_id,
+                name,
+                email,
+                brevo_sender_id,
+                verified,
+                created_at
+            )
+            VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING id
+            """,
+            (
+                user_id,
+                name,
+                email,
+                brevo_sender_id,
+                verified,
+                datetime.now(timezone.utc).isoformat()
+            )
+        )
+
+        sender_id = cursor.fetchone()["id"]
+
+    else:
+        cursor = connection.execute(
+            """
+            INSERT INTO senders (
+                user_id,
+                name,
+                email,
+                brevo_sender_id,
+                verified,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                name,
+                email,
+                brevo_sender_id,
+                int(verified),
+                datetime.now(timezone.utc).isoformat()
+            )
+        )
+
+        sender_id = cursor.lastrowid
+
+    connection.commit()
+    connection.close()
+
+    return sender_id
+
+
+def get_senders_by_user(user_id):
+    connection = get_connection()
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                user_id,
+                name,
+                email,
+                brevo_sender_id,
+                verified,
+                created_at
+            FROM senders
+            WHERE user_id = %s
+            ORDER BY id DESC
+            """,
+            (user_id,)
+        )
+
+        senders = cursor.fetchall()
+
+    else:
+        senders = connection.execute(
+            """
+            SELECT
+                id,
+                user_id,
+                name,
+                email,
+                brevo_sender_id,
+                verified,
+                created_at
+            FROM senders
+            WHERE user_id = ?
+            ORDER BY id DESC
+            """,
+            (user_id,)
+        ).fetchall()
+
+    connection.close()
+
+    return senders
+
+
+def get_sender_by_id(sender_id, user_id):
+    connection = get_connection()
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                user_id,
+                name,
+                email,
+                brevo_sender_id,
+                verified,
+                created_at
+            FROM senders
+            WHERE id = %s
+              AND user_id = %s
+            """,
+            (
+                sender_id,
+                user_id
+            )
+        )
+
+        sender = cursor.fetchone()
+
+    else:
+        sender = connection.execute(
+            """
+            SELECT
+                id,
+                user_id,
+                name,
+                email,
+                brevo_sender_id,
+                verified,
+                created_at
+            FROM senders
+            WHERE id = ?
+              AND user_id = ?
+            """,
+            (
+                sender_id,
+                user_id
+            )
+        ).fetchone()
+
+    connection.close()
+
+    return sender
+
+
+def update_sender_verification(sender_id, user_id, verified):
+    connection = get_connection()
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            UPDATE senders
+            SET verified = %s
+            WHERE id = %s
+              AND user_id = %s
+            """,
+            (
+                verified,
+                sender_id,
+                user_id
+            )
+        )
+
+    else:
+        connection.execute(
+            """
+            UPDATE senders
+            SET verified = ?
+            WHERE id = ?
+              AND user_id = ?
+            """,
+            (
+                int(verified),
+                sender_id,
+                user_id
+            )
+        )
+
+    connection.commit()
+    connection.close()
+
+
 
 
 
@@ -702,7 +1060,11 @@ def create_campaign(
     subject,
     body,
     created_at,
-    status="draft"
+    status="draft",
+    sender_id=None,
+    open_tracking=True,
+    click_tracking=True,
+    confirm_seen=True
 ):
     connection = get_connection()
 
@@ -713,20 +1075,28 @@ def create_campaign(
             """
             INSERT INTO campaigns (
                 user_id,
+                sender_id,
                 name,
                 subject,
                 body,
+                open_tracking,
+                click_tracking,
+                confirm_seen,
                 status,
                 created_at
             )
-            VALUES (%s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
             (
                 user_id,
+                sender_id,
                 name,
                 subject,
                 body,
+                open_tracking,
+                click_tracking,
+                confirm_seen,
                 status,
                 created_at
             )
@@ -739,19 +1109,27 @@ def create_campaign(
             """
             INSERT INTO campaigns (
                 user_id,
+                sender_id,
                 name,
                 subject,
                 body,
+                open_tracking,
+                click_tracking,
+                confirm_seen,
                 status,
                 created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user_id,
+                sender_id,
                 name,
                 subject,
                 body,
+                open_tracking,
+                click_tracking,
+                confirm_seen,
                 status,
                 created_at
             )

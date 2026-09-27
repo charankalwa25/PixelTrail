@@ -35,7 +35,11 @@ from backend.database import (
     get_campaign_email_by_recipient,
     update_campaign_status,
     update_campaign_email_status,
-    update_campaign_email_message_id
+    update_campaign_email_message_id,
+    create_sender,
+    get_senders_by_user,
+    get_sender_by_id,
+    update_sender_verification
 )
 
 from backend.auth import (
@@ -45,7 +49,12 @@ from backend.auth import (
     decode_access_token
 )
 
-from backend.email_service import send_email
+from backend.email_service import (
+    send_email,
+    create_brevo_sender,
+    get_brevo_senders,
+    validate_brevo_sender_otp
+)
 
 from datetime import datetime, timezone
 import uuid
@@ -100,9 +109,20 @@ class CampaignCreate(BaseModel):
     name: str
     subject: str
     body: str
+    sender_id: int | None = None
+    open_tracking: bool = True
+    click_tracking: bool = True
+    confirm_seen: bool = True
 
 class RecipientsRequest(BaseModel):
     recipients: str
+
+class SenderCreate(BaseModel):
+    name: str
+    email: str    
+
+class SenderVerifyRequest(BaseModel):
+    otp: str
 
 def personalize_body(body, recipient):
     email = recipient.strip().lower()
@@ -127,14 +147,20 @@ def personalize_body(body, recipient):
 
     return personalized_body
 
-def build_tracked_email_html(body, tracking_id):
+def build_tracked_email_html(
+    body,
+    tracking_id,
+    open_tracking=True,
+    click_tracking=True,
+    confirm_seen=True
+):
     tracking_pixel_url = (
-        f"https://pixeltrail.onrender.com/"
+        f"https://ramrod-amplify-jukebox.ngrok-free.dev/"
         f"track/{tracking_id}.png"
     )
 
     confirm_seen_url = (
-        f"https://pixeltrail.onrender.com/"
+        f"https://ramrod-amplify-jukebox.ngrok-free.dev/"
         f"track/confirm/{tracking_id}"
     )
 
@@ -143,55 +169,80 @@ def build_tracked_email_html(body, tracking_id):
         original_url = match.group(1)
 
         tracked_url = (
-            f"https://pixeltrail.onrender.com/"
+            f"https://ramrod-amplify-jukebox.ngrok-free.dev/"
             f"track/click/{tracking_id}"
             f"?url={quote(original_url, safe='')}"
         )
 
         return f'href="{tracked_url}"'
 
-    body = re.sub(
-        r'href=["\'](https?://[^"\']+)["\']',
-        replace_link,
-        body
-    )
+    # Convert plain-text URLs in the email body
+    def replace_plain_url(match):
+        original_url = match.group(1)
 
-    tracking_footer = f"""
-        <div style="margin-top:30px;">
-            <p style="font-size:12px;color:#888;">
-                If you have read this email, you can confirm it here:
-            </p>
+        if click_tracking:
+            tracked_url = (
+                f"https://ramrod-amplify-jukebox.ngrok-free.dev/"
+                f"track/click/{tracking_id}"
+                f"?url={quote(original_url, safe='')}"
+            )
 
-            <a
-                href="{confirm_seen_url}"
-                style="
-                    display:inline-block;
-                    padding:8px 14px;
-                    background:#111827;
-                    color:#ffffff;
-                    text-decoration:none;
-                    border-radius:6px;
-                    font-size:12px;
-                "
-            >
-                Confirm Seen
-            </a>
-        </div>
+            return f'<a href="{tracked_url}">{original_url}</a>'
 
-        <img
-            src="{tracking_pixel_url}"
-            width="1"
-            height="1"
-            alt=""
-            style="display:block;width:1px;height:1px;"
-        />
-    """
+        return f'<a href="{original_url}">{original_url}</a>'
+
+    # Only modify links when click tracking is enabled.
+    if click_tracking:
+        body = re.sub(
+            r'(?<!["\'])\b(https?://[^\s<>"\']+)',
+            replace_plain_url,
+            body
+        )
+
+    tracking_footer = ""
+
+    # Add Confirm Seen only when enabled.
+    if confirm_seen:
+        tracking_footer += f"""
+            <div style="margin-top:30px;">
+                <p style="font-size:12px;color:#888;">
+                    If you have read this email, you can confirm it here:
+                </p>
+                <a
+                    href="{confirm_seen_url}"
+                    style="
+                        display:inline-block;
+                        padding:8px 14px;
+                        background:#111827;
+                        color:#ffffff;
+                        text-decoration:none;
+                        border-radius:6px;
+                        font-size:12px;
+                    "
+                >
+                    Confirm Seen
+                </a>
+            </div>
+        """
+
+    # Add the tracking pixel only when open tracking is enabled.
+    if open_tracking:
+        tracking_footer += f"""
+            <img
+                src="{tracking_pixel_url}"
+                width="1"
+                height="1"
+                alt=""
+                style="display:block;width:1px;height:1px;"
+            />
+        """
 
     if "</body>" in body.lower():
         return body.replace(
             "</body>",
             tracking_footer + "</body>"
         )
+
 
     return body + tracking_footer
 
@@ -289,6 +340,222 @@ def get_current_user(
 
     return user
 
+# ============================================================
+# SENDER ENDPOINTS
+# ============================================================
+
+@app.post("/senders")
+def add_sender(
+    sender: SenderCreate,
+    current_user=Depends(get_current_user)
+):
+    name = sender.name.strip()
+    email = sender.email.strip().lower()
+
+    if not name:
+        raise HTTPException(
+            status_code=400,
+            detail="Sender name is required."
+        )
+
+    if not email:
+        raise HTTPException(
+            status_code=400,
+            detail="Sender email is required."
+        )
+
+    # Check whether this sender already exists
+    existing_senders = get_senders_by_user(current_user["id"])
+
+    for existing_sender in existing_senders:
+        if existing_sender["email"].lower() == email:
+            raise HTTPException(
+                status_code=400,
+                detail="This sender email is already added."
+            )
+
+    try:
+        # Create sender inside Brevo
+        brevo_sender = create_brevo_sender(
+            name=name,
+            email=email
+        )
+
+        brevo_sender_id = brevo_sender.get("id")
+
+        if not brevo_sender_id:
+            raise RuntimeError(
+                "Brevo did not return a sender ID."
+            )
+
+        # Save sender in PixelTrail database
+        sender_id = create_sender(
+            user_id=current_user["id"],
+            name=name,
+            email=email,
+            brevo_sender_id=brevo_sender_id,
+            verified=False
+        )
+
+        return {
+            "message": (
+                "Sender added successfully. "
+                "Please check the sender email for "
+                "Brevo verification."
+            ),
+            "sender_id": sender_id,
+            "brevo_sender_id": brevo_sender_id,
+            "name": name,
+            "email": email,
+            "verified": False
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+
+
+@app.get("/senders")
+def list_senders(
+    current_user=Depends(get_current_user)
+):
+    senders = get_senders_by_user(current_user["id"])
+
+    return {
+        "senders": senders
+    }    
+
+# ==========================================
+# VERIFY SENDER
+# ==========================================
+
+@app.post("/senders/{sender_id}/verify")
+def verify_sender(
+    sender_id: int,
+    verification: SenderVerifyRequest,
+    current_user=Depends(get_current_user)
+):
+    sender = get_sender_by_id(
+        sender_id,
+        current_user["id"]
+    )
+
+    if not sender:
+        raise HTTPException(
+            status_code=404,
+            detail="Sender not found."
+        )
+
+    if sender["verified"]:
+        return {
+            "sender_id": sender_id,
+            "verified": True,
+            "message": "Sender is already verified."
+        }
+
+    otp = verification.otp.strip()
+
+    if not otp.isdigit() or len(otp) != 6:
+        raise HTTPException(
+            status_code=400,
+            detail="Verification code must be exactly 6 digits."
+        )
+
+    try:
+        validate_brevo_sender_otp(
+            sender_id=sender["brevo_sender_id"],
+            otp=otp
+        )
+
+        update_sender_verification(
+            sender_id=sender_id,
+            user_id=current_user["id"],
+            verified=True
+        )
+
+        return {
+            "sender_id": sender_id,
+            "verified": True,
+            "message": "Sender verified successfully."
+        }
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+
+
+@app.post("/senders/{sender_id}/refresh")
+def refresh_sender_verification(
+    sender_id: int,
+    current_user=Depends(get_current_user)
+):
+    sender = get_sender_by_id(
+        sender_id,
+        current_user["id"]
+    )
+
+    if not sender:
+        raise HTTPException(
+            status_code=404,
+            detail="Sender not found."
+        )
+
+    try:
+        brevo_senders = get_brevo_senders()
+
+        matching_sender = None
+
+        for brevo_sender in brevo_senders:
+            if (
+                brevo_sender.get("id")
+                == sender["brevo_sender_id"]
+            ):
+                matching_sender = brevo_sender
+                break
+
+        if not matching_sender:
+            raise HTTPException(
+                status_code=404,
+                detail="Sender was not found in Brevo."
+            )
+
+        is_verified = bool(
+            matching_sender.get("active", False)
+        )
+
+        update_sender_verification(
+            sender_id=sender_id,
+            user_id=current_user["id"],
+            verified=is_verified
+        )
+
+        return {
+            "sender_id": sender_id,
+            "email": sender["email"],
+            "verified": is_verified,
+            "message": (
+                "Sender is verified."
+                if is_verified
+                else "Sender is not verified yet."
+            )
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error)
+        )
+
 @app.get("/auth/me")
 def get_me(current_user=Depends(get_current_user)):
     return {
@@ -306,11 +573,40 @@ def create_new_campaign(
 ):
     created_at = datetime.now(timezone.utc).isoformat()
 
+        # ------------------------------------------
+    # Validate selected sender
+    # ------------------------------------------
+
+    sender = None
+
+    if campaign.sender_id is not None:
+
+        sender = get_sender_by_id(
+            campaign.sender_id,
+            current_user["id"]
+        )
+
+        if not sender:
+            raise HTTPException(
+                status_code=404,
+                detail="Sender not found."
+            )
+
+        if not sender["verified"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Selected sender is not verified."
+            )
+
     campaign_id = create_campaign(
         user_id=current_user["id"],
+        sender_id=campaign.sender_id,
         name=campaign.name.strip(),
         subject=campaign.subject.strip(),
         body=campaign.body,
+        open_tracking=campaign.open_tracking,
+        click_tracking=campaign.click_tracking,
+        confirm_seen=campaign.confirm_seen,
         created_at=created_at,
         status="draft"
     )
@@ -393,6 +689,37 @@ def send_campaign(
             detail="Campaign not found."
         )
 
+        # ------------------------------------------
+    # Validate campaign sender
+    # ------------------------------------------
+
+    sender = None
+
+    if campaign["sender_id"] is not None:
+
+        sender = get_sender_by_id(
+            campaign["sender_id"],
+            current_user["id"]
+        )
+
+        if not sender:
+            raise HTTPException(
+                status_code=404,
+                detail="Campaign sender not found."
+            )
+
+        if not sender["verified"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Campaign sender is not verified."
+            )
+
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Please select a verified sender before sending."
+        )
+
     if campaign["user_id"] != current_user["id"]:
         raise HTTPException(
             status_code=403,
@@ -438,13 +765,18 @@ def send_campaign(
         try:
             tracked_html = build_tracked_email_html(
                 email["body"] or "",
-                email["tracking_id"]
+                email["tracking_id"],
+                open_tracking=campaign["open_tracking"],
+                click_tracking=campaign["click_tracking"],
+                confirm_seen=campaign["confirm_seen"]
             )
 
             result = send_email(
                 recipient=email["recipient"],
                 subject=email["subject"],
-                html_body=tracked_html
+                html_body=tracked_html,
+                sender_email=sender["email"],
+                sender_name=sender["name"]
             )
 
             update_campaign_email_status(

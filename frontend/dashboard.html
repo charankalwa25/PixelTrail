@@ -717,6 +717,14 @@
                     Recipients
                 </button>
 
+                <button
+                    class="nav-item"
+                    onclick="openSenders()"
+                >
+                    <span class="nav-icon">✉</span>
+                    Senders
+                </button>
+
             </nav>
 
         </div>
@@ -1353,7 +1361,7 @@ document.getElementById(
                                 campaign,
                                 emails
                             };
-                            
+
 
                         } catch (error) {
 
@@ -1630,6 +1638,15 @@ document.getElementById(
             "campaign.html";
 
     }
+
+    // ========================================
+// OPEN SENDERS
+// ========================================
+
+function openSenders() {
+    window.location.href =
+        "senders.html";
+}
 
 
     // =====================================

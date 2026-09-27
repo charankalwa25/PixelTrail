@@ -526,7 +526,7 @@
             margin: 15px;
             border-radius: 11px;
             border: 1px solid #e6e8ef;
-            background: #ffffff;
+            background: #f5f6fa;
             color: #20222a;
             overflow: hidden;
             box-shadow: 0 15px 45px rgba(0,0,0,0.2);
@@ -535,7 +535,7 @@
         .email-preview-top {
             padding: 13px 15px;
             border-bottom: 1px solid #e7e8ed;
-            background: #fafafa;
+            background: #f4f5f8;
         }
 
         .preview-from {
@@ -560,6 +560,7 @@
         .email-preview-body {
             min-height: 210px;
             padding: 18px;
+            background: #f8f9fc;
             color: #333640;
             font-family: Arial, sans-serif;
             font-size: 12px;
@@ -1148,6 +1149,772 @@
     border: 1px solid rgba(34, 197, 94, 0.18);
 }
 
+/* =========================================================
+   PIXELTRAIL CAMPAIGN BUILDER — UI POLISH
+   Visual-only improvements.
+   Does not affect campaign functionality.
+   ========================================================= */
+
+/* ---------- Campaign details layout ---------- */
+
+.form-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+/* Subject gets the full width */
+.form-grid > .form-group:last-child {
+    grid-column: 1 / -1;
+}
+
+
+/* ---------- Text inputs + sender dropdown ---------- */
+
+#campaignName,
+#campaignSender,
+#subject {
+    width: 100%;
+    height: 46px;
+    padding: 0 14px;
+
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 10px;
+
+    background: #0d0f15 !important;
+    color: #f4f5fb !important;
+
+    font-family: inherit;
+    font-size: 12px;
+
+    outline: none;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.025),
+        0 4px 18px rgba(0,0,0,0.12);
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+
+/* Placeholder */
+
+#campaignName::placeholder,
+#subject::placeholder {
+    color: #5f6473;
+}
+
+
+/* Focus */
+
+#campaignName:focus,
+#campaignSender:focus,
+#subject:focus {
+    border-color: rgba(124,92,255,0.65);
+
+    background: #10121a !important;
+
+    box-shadow:
+        0 0 0 3px rgba(124,92,255,0.10),
+        0 8px 25px rgba(0,0,0,0.18);
+}
+
+
+/* Sender dropdown */
+
+#campaignSender {
+    appearance: none;
+    -webkit-appearance: none;
+
+    cursor: pointer;
+
+    padding-right: 40px;
+
+    background-image:
+        linear-gradient(45deg, transparent 50%, #858a9b 50%),
+        linear-gradient(135deg, #858a9b 50%, transparent 50%);
+    background-position:
+        calc(100% - 17px) 20px,
+        calc(100% - 12px) 20px;
+    background-size:
+        5px 5px,
+        5px 5px;
+    background-repeat: no-repeat;
+}
+
+
+/* Dropdown options */
+
+#campaignSender option {
+    background: #11131a;
+    color: #f4f5fb;
+}
+
+
+/* ---------- Labels ---------- */
+
+.form-group label {
+    font-size: 10px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #b9bdd0;
+}
+
+
+/* ---------- Small helper text ---------- */
+
+.field-hint {
+    font-size: 9px;
+    color: #62687a;
+}
+
+
+/* ---------- Recipient textarea ---------- */
+
+.recipient-input {
+    min-height: 145px;
+
+    padding: 14px;
+
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 10px;
+
+    background: #0d0f15 !important;
+    color: #f4f5fb !important;
+
+    font-size: 12px;
+    line-height: 1.65;
+
+    outline: none;
+
+    resize: vertical;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.025),
+        0 4px 18px rgba(0,0,0,0.12);
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.recipient-input::placeholder {
+    color: #5f6473;
+}
+
+.recipient-input:focus {
+    border-color: rgba(124,92,255,0.65);
+
+    box-shadow:
+        0 0 0 3px rgba(124,92,255,0.10),
+        0 8px 25px rgba(0,0,0,0.18);
+}
+
+
+/* ---------- Recipient statistics ---------- */
+
+.recipient-stat {
+    border: 1px solid rgba(255,255,255,0.045);
+    background: rgba(255,255,255,0.025);
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.recipient-stat:hover {
+    background: rgba(124,92,255,0.055);
+    border-color: rgba(124,92,255,0.12);
+}
+
+
+/* ---------- Live preview ---------- */
+
+.preview-card {
+    border-color: rgba(124,92,255,0.13);
+
+    background:
+        radial-gradient(
+            circle at 100% 0%,
+            rgba(124,92,255,0.07),
+            transparent 35%
+        ),
+        rgba(16,17,22,0.92);
+
+    box-shadow:
+        0 15px 45px rgba(0,0,0,0.18);
+}
+
+
+.preview-header {
+    padding: 16px 18px;
+}
+
+
+.preview-header h3 {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+.preview-label {
+    padding: 5px 8px;
+
+    border: 1px solid rgba(124,92,255,0.14);
+    border-radius: 999px;
+
+    background: rgba(124,92,255,0.07);
+
+    color: #a99aff;
+
+    font-size: 8px;
+    font-weight: 700;
+}
+
+
+/* Actual email window */
+
+.email-preview {
+    position: relative;
+
+    margin: 18px;
+
+    border-radius: 13px;
+
+    border: 1px solid #e1e4eb;
+
+    box-shadow:
+        0 20px 55px rgba(0,0,0,0.28),
+        0 3px 12px rgba(0,0,0,0.08);
+
+    transform: translateZ(0);
+}
+
+
+/* Small PixelTrail accent at top of email */
+
+.email-preview::before {
+    content: "";
+
+    display: block;
+
+    height: 3px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #7c5cff,
+            #9b83ff,
+            #5ee7df
+        );
+}
+
+
+/* Email header */
+
+.email-preview-top {
+    padding: 15px 16px;
+
+    background: #fafbfc;
+}
+
+
+/* From */
+
+.preview-from {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    color: #777b86;
+
+    font-size: 9px;
+}
+
+
+/* Subject */
+
+.preview-subject {
+    margin-top: 7px;
+
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+
+/* Recipient */
+
+.preview-recipient {
+    margin-top: 5px;
+
+    color: #969ba7;
+    font-size: 8px;
+}
+
+
+/* Email body */
+
+.email-preview-body {
+    min-height: 230px;
+
+    padding: 20px;
+
+    font-size: 12px;
+    line-height: 1.75;
+
+    background: #ffffff;
+}
+
+
+/* Links in preview */
+
+.email-preview-body a {
+    color: #6248d8;
+    text-decoration: none;
+}
+
+.email-preview-body a:hover {
+    text-decoration: underline;
+}
+
+
+/* Footer */
+
+.preview-footer {
+    padding: 11px 15px;
+
+    background: #fafbfc;
+
+    color: #9297a3;
+}
+
+
+/* ---------- Campaign summary ---------- */
+
+.summary-row {
+    padding: 12px 0;
+}
+
+.summary-value.success {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.summary-value.success::before {
+    content: "";
+
+    width: 5px;
+    height: 5px;
+
+    border-radius: 50%;
+
+    background: #86efac;
+
+    box-shadow: 0 0 7px rgba(134,239,172,0.55);
+}
+
+
+/* ---------- Cards ---------- */
+
+.builder-card {
+    box-shadow:
+        0 8px 30px rgba(0,0,0,0.08);
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.builder-card:hover {
+    border-color: rgba(255,255,255,0.085);
+}
+
+
+/* ---------- Better card spacing ---------- */
+
+.card-header {
+    padding: 18px 21px;
+}
+
+.card-body {
+    padding: 20px 21px;
+}
+
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 750px) {
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-grid > .form-group:last-child {
+        grid-column: auto;
+    }
+
+}
+
+/* =========================================================
+   LIVE PREVIEW — FINAL POLISH
+   ========================================================= */
+
+/* Preview card */
+
+.preview-card {
+    position: relative;
+    overflow: hidden;
+
+    border: 1px solid rgba(124, 92, 255, 0.18);
+
+    background:
+        radial-gradient(
+            circle at 90% 0%,
+            rgba(124, 92, 255, 0.10),
+            transparent 32%
+        ),
+        rgba(16, 17, 22, 0.94);
+
+    box-shadow:
+        0 18px 50px rgba(0, 0, 0, 0.20);
+}
+
+
+/* Preview heading */
+
+.preview-header {
+    padding: 17px 18px;
+
+    background: rgba(255,255,255,0.012);
+
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.preview-header h3 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+}
+
+
+/* Recipient view badge */
+
+.preview-label {
+    padding: 5px 9px;
+
+    border-radius: 999px;
+
+    border: 1px solid rgba(124,92,255,0.20);
+
+    background: rgba(124,92,255,0.09);
+
+    color: #b7aaff;
+
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.7px;
+}
+
+
+/* =========================================================
+   EMAIL WINDOW
+   ========================================================= */
+
+.email-preview {
+    margin: 18px;
+
+    border-radius: 14px;
+
+    border: 1px solid #dfe2e8;
+
+    background: #ffffff;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 22px 55px rgba(0,0,0,0.30),
+        0 4px 14px rgba(0,0,0,0.10);
+}
+
+
+/* Email top accent */
+
+.email-preview::before {
+    content: "";
+
+    display: block;
+
+    height: 3px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #7c5cff 0%,
+            #8d72ff 45%,
+            #5ee7df 100%
+        );
+}
+
+
+/* =========================================================
+   EMAIL HEADER
+   ========================================================= */
+
+.email-preview-top {
+    position: relative;
+
+    padding: 17px 17px 15px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #fafbfc 100%
+        );
+
+    border-bottom: 1px solid #e7e9ee;
+}
+
+
+/* Sender row */
+
+.preview-from {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    color: #6f7480;
+
+    font-size: 9px;
+    font-weight: 500;
+}
+
+
+/* PixelTrail avatar */
+
+.preview-from::before {
+    content: "P";
+
+    width: 25px;
+    height: 25px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 8px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7c5cff,
+            #5ee7df
+        );
+
+    color: #ffffff;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    box-shadow:
+        0 4px 10px rgba(124,92,255,0.20);
+}
+
+
+/* Subject */
+
+.preview-subject {
+    margin-top: 10px;
+
+    color: #171922;
+
+    font-size: 14px;
+    font-weight: 750;
+
+    line-height: 1.35;
+
+    letter-spacing: -0.25px;
+}
+
+
+/* Recipient */
+
+.preview-recipient {
+    margin-top: 5px;
+
+    color: #9297a3;
+
+    font-size: 8px;
+}
+
+
+/* =========================================================
+   EMAIL BODY
+   ========================================================= */
+
+.email-preview-body {
+    min-height: 245px;
+
+    padding: 22px 19px;
+
+    background: #ffffff;
+
+    color: #30343d;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size: 12px;
+
+    line-height: 1.8;
+
+    word-break: break-word;
+}
+
+
+/* Body links */
+
+.email-preview-body a {
+    color: #6049d6;
+
+    font-weight: 500;
+
+    text-decoration: none;
+}
+
+.email-preview-body a:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================================================
+   PREVIEW FOOTER
+   ========================================================= */
+
+.preview-footer {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    padding: 11px 15px;
+
+    background: #f8f9fb;
+
+    border-top: 1px solid #e7e9ee;
+
+    color: #8e94a1;
+
+    font-size: 8px;
+
+    line-height: 1.5;
+}
+
+
+/* Green tracking indicator */
+
+.preview-footer::before {
+    content: "";
+
+    width: 6px;
+    height: 6px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: #22c55e;
+
+    box-shadow:
+        0 0 7px rgba(34,197,94,0.45);
+}
+
+
+/* =========================================================
+   PREVIEW HOVER
+   ========================================================= */
+
+.email-preview {
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.email-preview:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 27px 65px rgba(0,0,0,0.34),
+        0 5px 16px rgba(0,0,0,0.10);
+}
+
+
+/* Mobile */
+
+@media (max-width: 750px) {
+
+    .email-preview {
+        margin: 14px;
+    }
+
+    .email-preview-body {
+        min-height: 210px;
+        padding: 18px 16px;
+    }
+
+}
+
+/* =========================================================
+   LIVE PREVIEW - DARK EMAIL VIEW
+   ========================================================= */
+
+.email-preview {
+    background: #151720 !important;
+    border: 1px solid rgba(255,255,255,0.10);
+}
+
+.email-preview-top {
+    background: #191b25 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.preview-from {
+    color: #9da2b3 !important;
+}
+
+.preview-from::before {
+    background: linear-gradient(135deg, #7c5cff, #5ee7df);
+}
+
+.preview-subject {
+    color: #f4f5fb !important;
+}
+
+.preview-recipient {
+    color: #7f8495 !important;
+}
+
+.email-preview-body {
+    background: #151720 !important;
+    color: #d9dce6 !important;
+}
+
+.email-preview-body a {
+    color: #9b87ff !important;
+}
+
+.preview-footer {
+    background: #10121a !important;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    color: #7f8495 !important;
+}
+
     </style>
 </head>
 
@@ -1307,7 +2074,26 @@
                                 </div>
 
                             </div>
+        <div class="form-group">
 
+    <label for="campaignSender">
+        From / Sender
+    </label>
+
+    <select
+        id="campaignSender"
+        class="form-input"
+    >
+        <option value="">
+            Loading senders...
+        </option>
+    </select>
+
+    <div class="field-hint">
+        Only verified sender addresses can be used for campaigns.
+    </div>
+
+</div>
 
                             <div class="form-group">
 
@@ -2097,7 +2883,7 @@
 
 <script>
 
-    const API_URL = "https://pixeltrail.onrender.com";
+    const API_URL = window.location.origin;
 
     const token =
         localStorage.getItem("pixeltrail_token");
@@ -2196,6 +2982,81 @@
 
     }
 
+    // ==========================================
+// LOAD VERIFIED SENDERS
+// ==========================================
+
+async function loadCampaignSenders() {
+
+    const senderSelect =
+        document.getElementById("campaignSender");
+
+    if (!senderSelect) {
+        return;
+    }
+
+    try {
+
+        const data =
+            await apiRequest("/senders");
+
+        const senders =
+            data.senders || [];
+
+        const verifiedSenders =
+            senders.filter(
+                sender => Boolean(sender.verified)
+            );
+
+        senderSelect.innerHTML = "";
+
+        if (verifiedSenders.length === 0) {
+
+            senderSelect.innerHTML = `
+                <option value="">
+                    No verified senders available
+                </option>
+            `;
+
+            return;
+        }
+
+        senderSelect.innerHTML = `
+            <option value="">
+                Select a sender
+            </option>
+        `;
+
+        verifiedSenders.forEach(sender => {
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                sender.id;
+
+            option.textContent =
+                `${sender.name} — ${sender.email} ✓`;
+
+            senderSelect.appendChild(option);
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Failed to load senders:",
+            error
+        );
+
+        senderSelect.innerHTML = `
+            <option value="">
+                Failed to load senders
+            </option>
+        `;
+    }
+}
+
 
     // =========================================
     // LOAD EXISTING CAMPAIGN
@@ -2243,6 +3104,19 @@
         ).value =
             campaign.subject || "";
 
+        const campaignSender =
+            document.getElementById(
+                "campaignSender"
+            );
+
+        if (
+            campaignSender &&
+            campaign.sender_id
+        ) {
+            campaignSender.value =
+                String(campaign.sender_id);
+        }            
+
 
         // ========================================
         // LOAD EMAIL BODY
@@ -2252,6 +3126,16 @@
             "editor"
         ).innerHTML =
             campaign.body || "";
+
+            // LOAD TRACKING SETTINGS
+            document.getElementById("openTracking").checked =
+                Boolean(campaign.open_tracking);
+
+            document.getElementById("clickTracking").checked =
+                Boolean(campaign.click_tracking);
+
+            document.getElementById("seenTracking").checked =
+                Boolean(campaign.confirm_seen);
 
 
         // ========================================
@@ -3036,22 +3920,21 @@ if (!window.pixeltrailTrackingTimer) {
         try {
 
             const campaignData = {
+                name: document.getElementById("campaignName").value.trim(),
 
-                name:
-                    document.getElementById(
-                        "campaignName"
-                    ).value.trim(),
+                sender_id: Number(
+                    document.getElementById("campaignSender").value
+                ),
 
-                subject:
-                    document.getElementById(
-                        "subject"
-                    ).value.trim(),
+                subject: document.getElementById("subject").value.trim(),
 
-                body:
-                    document.getElementById(
-                        "editor"
-                    ).innerHTML
+                body: document.getElementById("editor").innerHTML,
 
+                open_tracking: document.getElementById("openTracking").checked,
+
+                click_tracking: document.getElementById("clickTracking").checked,
+
+                confirm_seen: document.getElementById("seenTracking").checked
             };
 
 
@@ -3257,8 +4140,14 @@ if (!currentCampaignId) {
                                 body:
                                     document.getElementById(
                                         "editor"
-                                    ).innerHTML
+                                    ).innerHTML,
 
+                                sender_id:
+                                    Number(
+                                        document.getElementById(
+                                            "campaignSender"
+                                        ).value
+                                    )
                             })
                         }
                     );
@@ -3476,6 +4365,7 @@ if (!currentCampaignId) {
 
     parseRecipients();
     updatePreview();
+    loadCampaignSenders();
     loadExistingCampaign();
 
     
