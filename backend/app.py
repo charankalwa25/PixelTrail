@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 
 import os
+import requests
 
 BREVO_API_KEY = os.getenv("BREVO_API_KEY")
 BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL")
@@ -651,6 +652,75 @@ def list_brevo_accounts(
         "accounts": [dict(account) for account in accounts]
     }
 
+@app.get("/brevo-accounts/usage")
+def get_brevo_accounts_usage(
+    current_user=Depends(get_current_user)
+):
+    accounts = get_brevo_accounts_by_user(
+        current_user["id"]
+    )
+
+    usage = []
+
+    for account in accounts:
+
+        full_account = get_brevo_account_by_id(
+            account["id"],
+            current_user["id"]
+        )
+
+        if not full_account:
+            continue
+
+        try:
+            response = requests.get(
+                "https://api.brevo.com/v3/account",
+                headers={
+                    "api-key": full_account["api_key"],
+                    "accept": "application/json"
+                },
+                timeout=10
+            )
+
+            response.raise_for_status()
+
+            brevo_data = response.json()
+
+            send_limit = 0
+
+            for plan in brevo_data.get("plan", []):
+                if plan.get("creditsType") == "sendLimit":
+                    send_limit = int(plan.get("credits", 0))
+                    break
+
+            daily_limit = 300
+            remaining = send_limit
+            used = max(0, daily_limit - remaining)
+
+            usage.append({
+                "id": account["id"],
+                "account_name": account["account_name"],
+                "sender_email": account["sender_email"],
+                "status": account["status"],
+                "daily_limit": daily_limit,
+                "used": used,
+                "remaining": remaining
+            })
+
+        except Exception as error:
+
+            usage.append({
+                "id": account["id"],
+                "account_name": account["account_name"],
+                "sender_email": account["sender_email"],
+                "status": account["status"],
+                "send_limit": 0,
+                "error": str(error)
+            })
+
+    return {
+        "accounts": usage
+    }
 
 @app.get("/brevo-accounts/{account_id}")
 def get_brevo_account(
