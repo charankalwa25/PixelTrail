@@ -12,9 +12,13 @@ def send_email(
     html_body,
     sandbox=False,
     sender_email=None,
-    sender_name=None
+    sender_name=None,
+    api_key=None
 ):
-    api_key = os.getenv("BREVO_API_KEY")
+    # Use the provided account API key.
+    # Fall back to the existing environment variable
+    # so the current PixelTrail setup keeps working.
+    api_key = api_key or os.getenv("BREVO_API_KEY")
 
     sender_email = (
         sender_email
@@ -28,7 +32,7 @@ def send_email(
 
     if not api_key:
         raise RuntimeError(
-            "BREVO_API_KEY is not configured."
+            "Brevo API key is not configured."
         )
 
     if not sender_email:
@@ -65,6 +69,14 @@ def send_email(
         json=payload,
         timeout=30
     )
+
+    if response.status_code != 201:
+        raise RuntimeError(
+            f"Brevo email send failed: "
+            f"{response.status_code} - {response.text}"
+        )
+
+    return response.json()
 
     if response.status_code != 201:
         raise RuntimeError(
@@ -172,3 +184,30 @@ def validate_brevo_sender_otp(sender_id, otp):
         )
 
     return True
+
+# ==========================================
+# VALIDATE BREVO API KEY
+# ==========================================
+
+def validate_brevo_api_key(api_key):
+    if not api_key:
+        raise RuntimeError(
+            "Brevo API key is required."
+        )
+
+    response = requests.get(
+        "https://api.brevo.com/v3/account",
+        headers={
+            "accept": "application/json",
+            "api-key": api_key
+        },
+        timeout=30
+    )
+
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Brevo API key validation failed: "
+            f"{response.status_code} - {response.text}"
+        )
+
+    return response.json()
