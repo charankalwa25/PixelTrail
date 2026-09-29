@@ -790,7 +790,6 @@ def create_new_campaign(
         user_id=current_user["id"],
         sender_id=campaign.sender_id,
         brevo_account_id=campaign.brevo_account_id,
-        brevo_account_id=campaign.brevo_account_id,
         name=campaign.name.strip(),
         subject=campaign.subject.strip(),
         body=campaign.body,
