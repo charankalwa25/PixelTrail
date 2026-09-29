@@ -1601,12 +1601,17 @@ accounts.forEach(account => {
                                 Added ${escapeHtml(createdAt)}
                             </div>
 
-                            <button
-                                class="delete-account-btn"
-                                onclick="deleteBrevoAccount(${Number(account.id)})"
-                            >
-                                Delete
-                            </button>
+                            ${account.is_default
+    ? ""
+    : `
+        <button
+            class="delete-account-btn"
+            onclick="deleteBrevoAccount(${Number(account.id)})"
+        >
+            Delete
+        </button>
+    `
+}
 
                         </div>
 

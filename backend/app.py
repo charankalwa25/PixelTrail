@@ -44,6 +44,7 @@ from backend.database import (
     create_brevo_account,
     get_brevo_accounts_by_user,
     get_brevo_account_by_id,
+    get_brevo_account_for_user,
     update_brevo_account,
     delete_brevo_account
 )
@@ -664,7 +665,7 @@ def get_brevo_accounts_usage(
 
     for account in accounts:
 
-        full_account = get_brevo_account_by_id(
+        full_account = get_brevo_account_for_user(
             account["id"],
             current_user["id"]
         )
@@ -1032,7 +1033,7 @@ def send_campaign(
                 confirm_seen=campaign["confirm_seen"]
             )
 
-            brevo_account = get_brevo_account_by_id(
+            brevo_account = get_brevo_account_for_user(
             campaign["brevo_account_id"],
             current_user["id"]
             )

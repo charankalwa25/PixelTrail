@@ -67,6 +67,7 @@ def initialize_database():
                 sender_email TEXT,
                 sender_name TEXT,
                 status TEXT NOT NULL DEFAULT 'connected',
+                is_default BOOLEAN NOT NULL DEFAULT FALSE,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
                 FOREIGN KEY (user_id)
@@ -248,6 +249,26 @@ def initialize_database():
 
         cursor.execute(
             """
+            ALTER TABLE brevo_accounts
+            ADD COLUMN IF NOT EXISTS is_default BOOLEAN
+            NOT NULL DEFAULT FALSE
+            """
+        )
+
+        cursor.execute(
+            """
+            UPDATE brevo_accounts
+            SET is_default = TRUE
+            WHERE sender_email IN (
+                'graymaverick77@gmail.com',
+                'lenovouser098765@gmail.com',
+                'kalwaeshwarnath@gmail.com'
+            )
+            """
+        )
+
+        cursor.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_brevo_accounts_user_id
             ON brevo_accounts(user_id)
             """
@@ -289,6 +310,7 @@ def initialize_database():
             sender_email TEXT,
             sender_name TEXT,
             status TEXT NOT NULL DEFAULT 'connected',
+            is_default INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             FOREIGN KEY (user_id)
@@ -387,6 +409,35 @@ def initialize_database():
             """
         )        
 
+        # ------------------------------
+    # Upgrade existing Brevo accounts table
+    # ------------------------------
+
+    brevo_account_columns = {
+        row["name"]
+        for row in connection.execute(
+            "PRAGMA table_info(brevo_accounts)"
+        ).fetchall()
+    }
+
+    if "is_default" not in brevo_account_columns:
+        connection.execute(
+            """
+            ALTER TABLE brevo_accounts
+            ADD COLUMN is_default INTEGER NOT NULL DEFAULT 0
+            """
+        )
+        connection.execute(
+        """
+        UPDATE brevo_accounts
+        SET is_default = 1
+        WHERE sender_email IN (
+            'graymaverick77@gmail.com',
+            'lenovouser098765@gmail.com',
+            'kalwaeshwarnath@gmail.com'
+        )
+        """
+    )
     # ------------------------------
     # Existing emails table
     # ------------------------------
@@ -541,6 +592,8 @@ def initialize_database():
         ON emails(tracking_id)
         """
     )
+
+    
 
     connection.execute(
         """
@@ -1640,10 +1693,12 @@ def get_brevo_accounts_by_user(user_id):
                 sender_email,
                 sender_name,
                 status,
+                is_default,
                 created_at,
                 updated_at
             FROM brevo_accounts
             WHERE user_id = %s
+            OR is_default = TRUE    
             ORDER BY id DESC
             """,
             (user_id,)
@@ -1661,10 +1716,12 @@ def get_brevo_accounts_by_user(user_id):
                 sender_email,
                 sender_name,
                 status,
+                is_default,
                 created_at,
                 updated_at
             FROM brevo_accounts
             WHERE user_id = ?
+            OR is_default = 1
             ORDER BY id DESC
             """,
             (user_id,)
@@ -1714,6 +1771,50 @@ def get_brevo_account_by_id(account_id, user_id):
 
     return account
 
+def get_brevo_account_for_user(account_id, user_id):
+    connection = get_connection()
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM brevo_accounts
+            WHERE id = %s
+              AND (
+                  user_id = %s
+                  OR is_default = TRUE
+              )
+            """,
+            (
+                account_id,
+                user_id
+            )
+        )
+
+        account = cursor.fetchone()
+
+    else:
+        account = connection.execute(
+            """
+            SELECT *
+            FROM brevo_accounts
+            WHERE id = ?
+              AND (
+                  user_id = ?
+                  OR is_default = 1
+              )
+            """,
+            (
+                account_id,
+                user_id
+            )
+        ).fetchone()
+
+    connection.close()
+
+    return account
 
 def update_brevo_account(
     account_id,
