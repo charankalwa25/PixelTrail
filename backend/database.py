@@ -54,6 +54,28 @@ def initialize_database():
             """
         )
 
+                # ------------------------------
+        # Brevo Accounts
+        # ------------------------------
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS brevo_accounts (
+                id BIGSERIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                account_name TEXT NOT NULL,
+                api_key TEXT NOT NULL,
+                sender_email TEXT,
+                sender_name TEXT,
+                status TEXT NOT NULL DEFAULT 'connected',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (user_id)
+                    REFERENCES users(id)
+                    ON DELETE CASCADE
+            )
+            """
+        )
+
                 # -----------------------------
         # Senders
         # -----------------------------
@@ -157,6 +179,15 @@ def initialize_database():
             """
         )
 
+        cursor.execute(
+            """
+            ALTER TABLE campaigns
+            ADD COLUMN IF NOT EXISTS brevo_account_id BIGINT
+            REFERENCES brevo_accounts(id)
+            ON DELETE SET NULL
+            """
+        )
+
 
         # ---------------------------
         # Campaign tracking settings
@@ -215,6 +246,13 @@ def initialize_database():
             """
         )
 
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_brevo_accounts_user_id
+            ON brevo_accounts(user_id)
+            """
+        )
+
         connection.commit()
         connection.close()
         return
@@ -236,6 +274,29 @@ def initialize_database():
         )
         """
     )
+
+
+        # ------------------------------
+    # Brevo Accounts
+    # ------------------------------
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS brevo_accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            account_name TEXT NOT NULL,
+            api_key TEXT NOT NULL,
+            sender_email TEXT,
+            sender_name TEXT,
+            status TEXT NOT NULL DEFAULT 'connected',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (user_id)
+                REFERENCES users(id)
+                ON DELETE CASCADE
+        )
+        """
+    )   
 
         # -----------------------------
     # Senders
@@ -440,6 +501,16 @@ def initialize_database():
             """
         )        
 
+    if "brevo_account_id" not in campaign_columns:
+        connection.execute(
+            """
+            ALTER TABLE campaigns
+            ADD COLUMN brevo_account_id INTEGER
+            REFERENCES brevo_accounts(id)
+            ON DELETE SET NULL
+            """
+        )
+
     # ------------------------------
     # Indexes
     # ------------------------------
@@ -468,6 +539,13 @@ def initialize_database():
         """
         CREATE INDEX IF NOT EXISTS idx_emails_tracking_id
         ON emails(tracking_id)
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_brevo_accounts_user_id
+        ON brevo_accounts(user_id)
         """
     )
 
@@ -1062,6 +1140,7 @@ def create_campaign(
     created_at,
     status="draft",
     sender_id=None,
+    brevo_account_id=None,
     open_tracking=True,
     click_tracking=True,
     confirm_seen=True
@@ -1076,6 +1155,7 @@ def create_campaign(
             INSERT INTO campaigns (
                 user_id,
                 sender_id,
+                brevo_account_id,
                 name,
                 subject,
                 body,
@@ -1085,12 +1165,13 @@ def create_campaign(
                 status,
                 created_at
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
             (
                 user_id,
                 sender_id,
+                brevo_account_id,
                 name,
                 subject,
                 body,
@@ -1110,6 +1191,7 @@ def create_campaign(
             INSERT INTO campaigns (
                 user_id,
                 sender_id,
+                brevo_account_id,
                 name,
                 subject,
                 body,
@@ -1119,11 +1201,12 @@ def create_campaign(
                 status,
                 created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user_id,
                 sender_id,
+                brevo_account_id,
                 name,
                 subject,
                 body,
@@ -1456,3 +1539,289 @@ def update_campaign_email_status(email_id, status):
 
     connection.commit()
     connection.close()
+
+
+# =========================================================
+# BREVO ACCOUNT FUNCTIONS
+# =========================================================
+
+def create_brevo_account(
+    user_id,
+    account_name,
+    api_key,
+    sender_email=None,
+    sender_name=None,
+    status="connected"
+):
+    connection = get_connection()
+
+    created_at = datetime.now(timezone.utc).isoformat()
+    updated_at = created_at
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO brevo_accounts (
+                user_id,
+                account_name,
+                api_key,
+                sender_email,
+                sender_name,
+                status,
+                created_at,
+                updated_at
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+            """,
+            (
+                user_id,
+                account_name,
+                api_key,
+                sender_email,
+                sender_name,
+                status,
+                created_at,
+                updated_at
+            )
+        )
+
+        account_id = cursor.fetchone()["id"]
+
+    else:
+        cursor = connection.execute(
+            """
+            INSERT INTO brevo_accounts (
+                user_id,
+                account_name,
+                api_key,
+                sender_email,
+                sender_name,
+                status,
+                created_at,
+                updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                account_name,
+                api_key,
+                sender_email,
+                sender_name,
+                status,
+                created_at,
+                updated_at
+            )
+        )
+
+        account_id = cursor.lastrowid
+
+    connection.commit()
+    connection.close()
+
+    return account_id
+
+
+def get_brevo_accounts_by_user(user_id):
+    connection = get_connection()
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                user_id,
+                account_name,
+                sender_email,
+                sender_name,
+                status,
+                created_at,
+                updated_at
+            FROM brevo_accounts
+            WHERE user_id = %s
+            ORDER BY id DESC
+            """,
+            (user_id,)
+        )
+
+        accounts = cursor.fetchall()
+
+    else:
+        accounts = connection.execute(
+            """
+            SELECT
+                id,
+                user_id,
+                account_name,
+                sender_email,
+                sender_name,
+                status,
+                created_at,
+                updated_at
+            FROM brevo_accounts
+            WHERE user_id = ?
+            ORDER BY id DESC
+            """,
+            (user_id,)
+        ).fetchall()
+
+    connection.close()
+
+    return accounts
+
+
+def get_brevo_account_by_id(account_id, user_id):
+    connection = get_connection()
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM brevo_accounts
+            WHERE id = %s
+              AND user_id = %s
+            """,
+            (
+                account_id,
+                user_id
+            )
+        )
+
+        account = cursor.fetchone()
+
+    else:
+        account = connection.execute(
+            """
+            SELECT *
+            FROM brevo_accounts
+            WHERE id = ?
+              AND user_id = ?
+            """,
+            (
+                account_id,
+                user_id
+            )
+        ).fetchone()
+
+    connection.close()
+
+    return account
+
+
+def update_brevo_account(
+    account_id,
+    user_id,
+    account_name=None,
+    api_key=None,
+    sender_email=None,
+    sender_name=None,
+    status=None
+):
+    connection = get_connection()
+
+    updated_at = datetime.now(timezone.utc).isoformat()
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            UPDATE brevo_accounts
+            SET
+                account_name = COALESCE(%s, account_name),
+                api_key = COALESCE(%s, api_key),
+                sender_email = COALESCE(%s, sender_email),
+                sender_name = COALESCE(%s, sender_name),
+                status = COALESCE(%s, status),
+                updated_at = %s
+            WHERE id = %s
+              AND user_id = %s
+            """,
+            (
+                account_name,
+                api_key,
+                sender_email,
+                sender_name,
+                status,
+                updated_at,
+                account_id,
+                user_id
+            )
+        )
+
+    else:
+        connection.execute(
+            """
+            UPDATE brevo_accounts
+            SET
+                account_name = COALESCE(?, account_name),
+                api_key = COALESCE(?, api_key),
+                sender_email = COALESCE(?, sender_email),
+                sender_name = COALESCE(?, sender_name),
+                status = COALESCE(?, status),
+                updated_at = ?
+            WHERE id = ?
+              AND user_id = ?
+            """,
+            (
+                account_name,
+                api_key,
+                sender_email,
+                sender_name,
+                status,
+                updated_at,
+                account_id,
+                user_id
+            )
+        )
+
+    connection.commit()
+    connection.close()
+
+
+def delete_brevo_account(account_id, user_id):
+    connection = get_connection()
+
+    if DATABASE_URL:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            DELETE FROM brevo_accounts
+            WHERE id = %s
+              AND user_id = %s
+            """,
+            (
+                account_id,
+                user_id
+            )
+        )
+
+        deleted = cursor.rowcount > 0
+
+    else:
+        cursor = connection.execute(
+            """
+            DELETE FROM brevo_accounts
+            WHERE id = ?
+              AND user_id = ?
+            """,
+            (
+                account_id,
+                user_id
+            )
+        )
+
+        deleted = cursor.rowcount > 0
+
+    connection.commit()
+    connection.close()
+
+    return deleted    
