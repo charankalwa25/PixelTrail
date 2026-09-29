@@ -1172,6 +1172,7 @@
 
 #campaignName,
 #campaignSender,
+#campaignBrevoAccount,
 #subject {
     width: 100%;
     height: 46px;
@@ -1211,6 +1212,7 @@
 
 #campaignName:focus,
 #campaignSender:focus,
+#campaignBrevoAccount:focus,
 #subject:focus {
     border-color: rgba(124,92,255,0.65);
 
@@ -1224,7 +1226,8 @@
 
 /* Sender dropdown */
 
-#campaignSender {
+#campaignSender,
+#campaignBrevoAccount {
     appearance: none;
     -webkit-appearance: none;
 
@@ -1247,7 +1250,8 @@
 
 /* Dropdown options */
 
-#campaignSender option {
+#campaignSender option,
+#campaignBrevoAccount option {
     background: #11131a;
     color: #f4f5fb;
 }
@@ -2091,6 +2095,27 @@
 
     <div class="field-hint">
         Only verified sender addresses can be used for campaigns.
+    </div>
+
+</div>
+
+<div class="form-group">
+
+    <label for="campaignBrevoAccount">
+        Brevo Account
+    </label>
+
+    <select
+        id="campaignBrevoAccount"
+        class="form-input"
+    >
+        <option value="">
+            Loading Brevo accounts...
+        </option>
+    </select>
+
+    <div class="field-hint">
+        Choose which connected Brevo account will send this campaign.
     </div>
 
 </div>
@@ -2982,6 +3007,74 @@
 
     }
 
+// ==========================================
+// LOAD BREVO ACCOUNTS
+// ==========================================
+
+async function loadBrevoAccounts() {
+
+    const accountSelect =
+        document.getElementById("campaignBrevoAccount");
+
+    if (!accountSelect) {
+        return;
+    }
+
+    try {
+
+        const data =
+            await apiRequest("/brevo-accounts");
+
+        const accounts =
+            data.accounts || [];
+
+        accountSelect.innerHTML = "";
+
+        const connectedAccounts =
+            accounts.filter(
+                account => account.status === "connected"
+            );
+
+        if (connectedAccounts.length === 0) {
+
+            accountSelect.innerHTML = `
+                <option value="">
+                    No connected Brevo accounts available
+                </option>
+            `;
+
+            return;
+        }
+
+        connectedAccounts.forEach(account => {
+
+            const option =
+                document.createElement("option");
+
+            option.value = account.id;
+
+            option.textContent =
+                account.account_name || account.sender_email;
+
+            accountSelect.appendChild(option);
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Failed to load Brevo accounts:",
+            error
+        );
+
+        accountSelect.innerHTML = `
+            <option value="">
+                Failed to load Brevo accounts
+            </option>
+        `;
+    }
+}    
+
     // ==========================================
 // LOAD VERIFIED SENDERS
 // ==========================================
@@ -3117,6 +3210,18 @@ async function loadCampaignSenders() {
                 String(campaign.sender_id);
         }            
 
+        const campaignBrevoAccount =
+            document.getElementById(
+                "campaignBrevoAccount"
+            );
+
+        if (
+            campaignBrevoAccount &&
+            campaign.brevo_account_id
+        ) {
+            campaignBrevoAccount.value =
+                String(campaign.brevo_account_id);
+        }
 
         // ========================================
         // LOAD EMAIL BODY
@@ -3926,6 +4031,10 @@ if (!window.pixeltrailTrackingTimer) {
                     document.getElementById("campaignSender").value
                 ),
 
+                brevo_account_id: Number(
+                    document.getElementById("campaignBrevoAccount").value
+                ),
+
                 subject: document.getElementById("subject").value.trim(),
 
                 body: document.getElementById("editor").innerHTML,
@@ -4147,7 +4256,14 @@ if (!currentCampaignId) {
                                         document.getElementById(
                                             "campaignSender"
                                         ).value
-                                    )
+                                    ),
+
+                                brevo_account_id:
+                                    Number(
+                                        document.getElementById(
+                                            "campaignBrevoAccount"
+                                        ).value
+                                    )                                    
                             })
                         }
                     );
@@ -4366,6 +4482,7 @@ if (!currentCampaignId) {
     parseRecipients();
     updatePreview();
     loadCampaignSenders();
+    loadBrevoAccounts();
     loadExistingCampaign();
 
     
