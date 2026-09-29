@@ -39,7 +39,12 @@ from backend.database import (
     create_sender,
     get_senders_by_user,
     get_sender_by_id,
-    update_sender_verification
+    update_sender_verification,
+    create_brevo_account,
+    get_brevo_accounts_by_user,
+    get_brevo_account_by_id,
+    update_brevo_account,
+    delete_brevo_account
 )
 
 from backend.auth import (
@@ -53,7 +58,8 @@ from backend.email_service import (
     send_email,
     create_brevo_sender,
     get_brevo_senders,
-    validate_brevo_sender_otp
+    validate_brevo_sender_otp,
+    validate_brevo_api_key
 )
 
 from datetime import datetime, timezone
@@ -110,6 +116,7 @@ class CampaignCreate(BaseModel):
     subject: str
     body: str
     sender_id: int | None = None
+    brevo_account_id: int | None = None
     open_tracking: bool = True
     click_tracking: bool = True
     confirm_seen: bool = True
@@ -123,6 +130,20 @@ class SenderCreate(BaseModel):
 
 class SenderVerifyRequest(BaseModel):
     otp: str
+
+class BrevoAccountCreate(BaseModel):
+    account_name: str
+    api_key: str
+    sender_email: str | None = None
+    sender_name: str | None = None
+
+
+class BrevoAccountUpdate(BaseModel):
+    account_name: str | None = None
+    api_key: str | None = None
+    sender_email: str | None = None
+    sender_name: str | None = None
+    status: str | None = None    
 
 def personalize_body(body, recipient):
     email = recipient.strip().lower()
@@ -556,6 +577,173 @@ def refresh_sender_verification(
             detail=str(error)
         )
 
+# ============================================================
+# BREVO ACCOUNT ENDPOINTS
+# ============================================================
+
+@app.post("/brevo-accounts")
+def add_brevo_account(
+    account: BrevoAccountCreate,
+    current_user=Depends(get_current_user)
+):
+    account_name = account.account_name.strip()
+    api_key = account.api_key.strip()
+
+    if not account_name:
+        raise HTTPException(
+            status_code=400,
+            detail="Account name is required."
+        )
+
+    if not api_key:
+        raise HTTPException(
+            status_code=400,
+            detail="Brevo API key is required."
+        )
+
+    try:
+        # Validate the API key with Brevo before saving it.
+        brevo_account_info = validate_brevo_api_key(api_key)
+
+        account_id = create_brevo_account(
+            user_id=current_user["id"],
+            account_name=account_name,
+            api_key=api_key,
+            sender_email=(
+                account.sender_email.strip().lower()
+                if account.sender_email
+                else None
+            ),
+            sender_name=(
+                account.sender_name.strip()
+                if account.sender_name
+                else None
+            ),
+            status="connected"
+        )
+
+        return {
+            "message": "Brevo account added successfully.",
+            "account_id": account_id,
+            "account_name": account_name,
+            "sender_email": account.sender_email,
+            "sender_name": account.sender_name,
+            "status": "connected"
+        }
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+            
+
+
+@app.get("/brevo-accounts")
+def list_brevo_accounts(
+    current_user=Depends(get_current_user)
+):
+    accounts = get_brevo_accounts_by_user(
+        current_user["id"]
+    )
+
+    return {
+        "accounts": [dict(account) for account in accounts]
+    }
+
+
+@app.get("/brevo-accounts/{account_id}")
+def get_brevo_account(
+    account_id: int,
+    current_user=Depends(get_current_user)
+):
+    account = get_brevo_account_by_id(
+        account_id,
+        current_user["id"]
+    )
+
+    if not account:
+        raise HTTPException(
+            status_code=404,
+            detail="Brevo account not found."
+        )
+
+    account_data = dict(account)
+
+    # Never expose the API key to the frontend.
+    account_data.pop("api_key", None)
+
+    return account_data
+
+
+@app.put("/brevo-accounts/{account_id}")
+def edit_brevo_account(
+    account_id: int,
+    account: BrevoAccountUpdate,
+    current_user=Depends(get_current_user)
+):
+    existing_account = get_brevo_account_by_id(
+        account_id,
+        current_user["id"]
+    )
+
+    if not existing_account:
+        raise HTTPException(
+            status_code=404,
+            detail="Brevo account not found."
+        )
+
+    update_brevo_account(
+        account_id=account_id,
+        user_id=current_user["id"],
+        account_name=(
+            account.account_name.strip()
+            if account.account_name is not None
+            else None
+        ),
+        api_key=(
+            account.api_key.strip()
+            if account.api_key is not None
+            else None
+        ),
+        sender_email=(
+            account.sender_email.strip().lower()
+            if account.sender_email is not None
+            else None
+        ),
+        sender_name=(
+            account.sender_name.strip()
+            if account.sender_name is not None
+            else None
+        ),
+        status=account.status
+    )
+
+    return {
+        "message": "Brevo account updated successfully."
+    }
+
+
+@app.delete("/brevo-accounts/{account_id}")
+def remove_brevo_account(
+    account_id: int,
+    current_user=Depends(get_current_user)
+):
+    deleted = delete_brevo_account(
+        account_id,
+        current_user["id"]
+    )
+
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="Brevo account not found."
+        )
+
+    return {
+        "message": "Brevo account deleted successfully."
+    }    
+
 @app.get("/auth/me")
 def get_me(current_user=Depends(get_current_user)):
     return {
@@ -601,6 +789,8 @@ def create_new_campaign(
     campaign_id = create_campaign(
         user_id=current_user["id"],
         sender_id=campaign.sender_id,
+        brevo_account_id=campaign.brevo_account_id,
+        brevo_account_id=campaign.brevo_account_id,
         name=campaign.name.strip(),
         subject=campaign.subject.strip(),
         body=campaign.body,
@@ -663,6 +853,8 @@ def get_campaign_emails(
             status_code=404,
             detail="Campaign not found."
         )
+
+    
 
     if campaign["user_id"] != current_user["id"]:
         raise HTTPException(
@@ -771,12 +963,23 @@ def send_campaign(
                 confirm_seen=campaign["confirm_seen"]
             )
 
+            brevo_account = get_brevo_account_by_id(
+            campaign["brevo_account_id"],
+            current_user["id"]
+            )
+
+            if not brevo_account:
+                raise RuntimeError(
+                    "Selected Brevo account lookup returned None."
+                )
+
             result = send_email(
                 recipient=email["recipient"],
                 subject=email["subject"],
                 html_body=tracked_html,
                 sender_email=sender["email"],
-                sender_name=sender["name"]
+                sender_name=sender["name"],
+                api_key=brevo_account["api_key"]
             )
 
             update_campaign_email_status(
